@@ -86,8 +86,10 @@ Well, I know, I know... the big comment block makes me looks really lazy, but I 
 
 Anyway, as you can see, this time we use *OnEntered()* to make the player jump.
 
-*OnEntered()* and its friend, *OnLeaving()*, only get called when the state is entered/switched to by the State Machine, quite useful when you need some 1 time effect instead of *Update()*.  
-*p.s. However, the frequency of Update() definitedly depends on how you use the framework.*
+*OnEntered()* , only get called when the state is entered/switched to by the State Machine,and its friend, *OnLeaving()*, only get called before the State Mahcine is going to another state.
+
+Quite useful when you need some 1 time effect instead of *Update()*.  
+*p.s. However, the frequency of Update() definitely depends on how you use the framework.*
 
 We gotta be a down-to-earth person, so it's time for the InAir state, the InAir represent a situation that the player object is still in air, not yet fall to the ground.
 
@@ -116,7 +118,7 @@ Now that's basically done for a neat double/multiple jump system.
 🥂
 
 ## Shared Data
-What if you want to store some data only to be used by states? I understand, sometimes I just want to keep my code extremely clean, keep everything exposed in a degree everything just referenced by other classes need it.
+What if you want to store some data only to be used by states? I understand, sometimes I also want to keep my code extremely clean so that everything exposed in a degree that except for those who need it, nothing can reference it.
 
 You can store any data into a *StateMachine* by SetSharedObject<T>(). For example, I want the player can only jump 2 times in a row, so I do this:
 
