@@ -29,7 +29,7 @@ public class Player : MonoBehaviour
     // Update() in UnityEngine is called every frame.
     void Update ()
     {
-        stateMachine?.Update(); 
+        stateMachine?.Update(); // You have to keep the state machine updated! It only do its job when updated.
     }
 }
 ```
@@ -193,3 +193,9 @@ public class State_Grounded : State<Player>
 
 By this, we add a jump times limit feature without touching the main Player script.
 🥂
+
+## Context & Target
+Context and Target indicate same thing: the original script controlled by the state machine, to the states, it's Context; to the state machine, it's the Target.
+
+## Debug The Transitions
+To see the state transitition, simply subscribe to the string delegate StateMachine<T>.debugLogOutput.
