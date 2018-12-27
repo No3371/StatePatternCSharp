@@ -1,6 +1,5 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
 
 namespace BA_Studio.StatePattern
 {
@@ -9,45 +8,34 @@ namespace BA_Studio.StatePattern
 	// Define and customize your own State<T>.
 	// It does not update states by itself, calls Update()/FixedUpdate() when you need.
 	// You have to keep the stateController instance of your T, this allows you to easily attach this state pattern to any class.
-	public class StateMachine<T> where T : class {
+	public class StateMachine<T> where T : class
+	{
 
-		public bool UnityDebugLog = false;
+		public System.Action<string> debugLogOutput;
 
 		public T Target { get; internal set; }
 
 		public State<T> CurrentState { get; internal set; }
 
-		int pauseCount = 0;
-
-		public StateMachine (T owner) {
-			// if (!startStateType.IsSubclassOf(typeof(IState<T>))) throw new System.Exception(startStateType.Name + " is not a valid state type for this object!");
+		public StateMachine (T owner)
+		{
 			this.Target = owner;
 		}
 
 		
 		public void Update ()
 		{
-			if (pauseCount > 0) 
-			{
-				pauseCount -= 1;
-				return;
-			}
 			if (CurrentState == null) throw new System.Exception("CurrentState is null. Did you set a state after instantiate this controller?");
 			if (CurrentState.AllowUpdate) CurrentState.Update();
 		}
 
 		public void ChangeState (State<T> nextState, bool instantUpdate = false)
 		{
-			if (UnityDebugLog) Debug.Log(Target.GetType() + " is changing to: " + nextState.GetType().Name);
+			debugLogOutput?.Invoke("StateMachine<" + Target.GetType() + "> is switching to: " + nextState.GetType().Name);
 			CurrentState?.OnLeaving();
 			CurrentState = nextState;
 			CurrentState?.OnEntered();
 			if (instantUpdate) CurrentState?.Update();
-		}
-
-		public void PauseUpdateForFrames (int count = 1)
-		{
-			pauseCount = count;
 		}
 
 		Dictionary<string, System.Tuple<System.Type, object>> sharedMemory;
@@ -68,11 +56,11 @@ namespace BA_Studio.StatePattern
 			{
 				if (SharedMemory[ID].Item1 == typeof(T2)) return (T2)SharedMemory[ID].Item2;
 				else if (returnNewDefaultIfTypeError) return default(T2);
-				else throw new System.Exception("StateController<" + typeof(T2).ToString() + ">(" + CurrentState.ToString() + ") Requesting wrong type of shared object.");
+				else throw new System.Exception("StateController<" + Target.GetType().ToString() + ">(" + CurrentState.ToString() + ") Requesting wrong type of shared object.");
 			}
 			else if (SharedMemory[ID].Item2 is T2) return (T2)SharedMemory[ID].Item2;
 			else if (returnNewDefaultIfTypeError) return default(T2);
-			else throw new System.Exception("StateController<" + typeof(T2).ToString() + ">(" + CurrentState.ToString() + ") Requesting wrong type of shared object.");
+			else throw new System.Exception("StateController<" + Target.GetType().ToString() + ">(" + CurrentState.ToString() + ") Requesting wrong type of shared object.");
 		}
 
 		/// Shared Objects is objects shared among states.
