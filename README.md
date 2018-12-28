@@ -91,7 +91,9 @@ Anyway, as you can see, this time we use *OnEntered()* to make the player jump.
 Quite useful when you need some 1 time effect instead of *Update()*.  
 *p.s. However, the frequency of Update() definitely depends on how you use the framework.*
 
-We gotta be a down-to-earth person, so it's time for the InAir state, the InAir represent a situation that the player object is still in air, not yet fall to the ground.
+We gotta be a down-to-earth person, so it's time for the InAir state, so we will not remain the jump forever...
+
+the InAir represent a situation that the player object is still in air, not yet fall to the ground.
 
 ##### InAir State  
 ```c#
