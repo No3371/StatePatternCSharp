@@ -1,13 +1,22 @@
 ﻿using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
 namespace BAStudio.StatePattern
 {
 
-    public abstract class DynamicStateMachine<T> : IStateMachine<T>
+    public abstract class StateMachine<T> : IStateMachine<T>
     {
-		public event System.Action<string> DebugOutput;
+        protected StateMachine(T target)
+        {
+            Target = target;
+            AllowUpdate = true;
+            WillPassEvent = false;
+            ChangingState = false;
+        }
+
+        public event System.Action<string> DebugOutput;
         public T Target { get; }
         public IState<T> CurrentState { get; protected set; }
         public bool AllowUpdate { get; set; }
@@ -15,6 +24,7 @@ namespace BAStudio.StatePattern
         public bool ChangingState { get; protected set; }
         public event Action<IState<T>, IState<T>> OnStateChanging;
         public event Action<IState<T>, IState<T>> OnStateChanged;
+        private Dictionary<Type, IState<T>> AutoStateCache { get; set; }
         public virtual void ChangeState(IState<T> state)
         {
 			var prev = CurrentState;
@@ -33,6 +43,18 @@ namespace BAStudio.StatePattern
 			else CurrentState?.OnEntered(this);
 			PostStateChange(prev);
         }
+        public virtual void ChangeState<S>() where S : IState<T>, new()
+		{
+			if (AutoStateCache == null) AutoStateCache = new Dictionary<Type, IState<T>>();
+			if (!AutoStateCache.ContainsKey(typeof(S))) AutoStateCache.Add(typeof(S), new S());
+			ChangeState(AutoStateCache[typeof(S)]);
+		} 
+        public virtual void ChangeState<S, P>(P parameter) where S : IState<T>, new() where P : IStateParameter<T>
+		{
+			if (AutoStateCache == null) AutoStateCache = new Dictionary<Type, IState<T>>();
+			if (!AutoStateCache.ContainsKey(typeof(S))) AutoStateCache.Add(typeof(S), new S());
+			ChangeState(AutoStateCache[typeof(S)], parameter);
+		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		protected virtual void PreStateChange (IState<T> fromState, IState<T> toState)
@@ -67,5 +89,4 @@ namespace BAStudio.StatePattern
 			return true;
         }
 	}
-
 }
