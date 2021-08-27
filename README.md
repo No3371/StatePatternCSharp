@@ -3,6 +3,12 @@ A simple framework does nothing on its own σ (´・ω・`), made to help you ke
 It's quite useful in case you need a subject to behave differently in different sitautions, especially you want it to transform swiftly between different logic.
 
 
+
+```INFO
+The project is rebuilt from ground up in August 2021, the README does not apply to current version until it's rewritten.
+```
+
+
 ## Concept
 To pull out the actual worker logic from a class and put in different States, kind of shape the original object into a data storage / handle.
 
