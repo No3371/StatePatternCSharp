@@ -20,7 +20,7 @@ namespace BAStudio.StatePattern
 			var prev = CurrentState;
 			PreStateChange(CurrentState, state);
 			CurrentState = state;
-			CurrentState?.OnEntered();
+			CurrentState?.OnEntered(this);
 			PostStateChange(prev);
         }
 
@@ -30,7 +30,7 @@ namespace BAStudio.StatePattern
 			PreStateChange(CurrentState, state);
 			CurrentState = state;
 			if (CurrentState is IParameterConsumer<T, P> pc) pc?.OnEntered(parameter);
-			else CurrentState?.OnEntered();
+			else CurrentState?.OnEntered(this);
 			PostStateChange(prev);
         }
 
@@ -40,7 +40,7 @@ namespace BAStudio.StatePattern
 			WillPassEvent = false;
 			ChangingState = true;
 			DebugOutput?.Invoke("StateMachine<" + Target.GetType().Name + "> is switching to: " + toState.GetType().Name);
-			fromState?.OnLeaving();
+			fromState?.OnLeaving(this);
 			OnStateChanging(fromState, toState);
 		}
 
@@ -57,13 +57,13 @@ namespace BAStudio.StatePattern
 			if (!AllowUpdate) return;
 			if (Target == null) throw new System.NullReferenceException("Target is null.");
 			if (CurrentState == null) throw new System.NullReferenceException("CurrentState is null. Did you set a state after instantiate this controller?");
-			if (CurrentState.AllowUpdate) CurrentState.Update();
+			if (CurrentState.AllowUpdate) CurrentState.Update(this);
 		}
 
         public virtual bool InvokeEvent(IStateEvent<T> stateEvent)
         {
 			if (!WillPassEvent || !stateEvent.CanInvoke(CurrentState)) return false;
-			CurrentState?.ReceiveEvent(stateEvent);
+			CurrentState?.ReceiveEvent(this, stateEvent);
 			return true;
         }
 	}

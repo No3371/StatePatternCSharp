@@ -4,22 +4,11 @@ namespace BAStudio.StatePattern
 {
     public abstract class State<T> : IState<T>
     {
-        public IStateMachine<T> StateMachine { get; }
-		protected T Context { get { return StateMachine.Target; }}
         public bool AllowUpdate { get; protected set; }
-		public virtual void ChangeState (IState<T> nextState)
-		{
-			StateMachine.ChangeState(nextState);
-		}
-        public abstract void OnEntered();
-        public abstract void OnEntered(IStateParameter<T> parameter);
-        public abstract void Update();
-        public abstract void OnLeaving();
-        public abstract void ReceiveEvent(IStateEvent<T> stateEvent);
-    }
-
-    public abstract class State<T, M> : State<T>, IState<T, M> where M : IStateMachine<T>
-    {
-        M IState<T, M>.StateMachine => (M) StateMachine;
+        public abstract void OnEntered(IStateMachine<T> machine);
+        public abstract void OnEntered(IStateMachine<T> machine, IStateParameter<T> parameter);
+        public abstract void Update(IStateMachine<T> machine);
+        public abstract void OnLeaving(IStateMachine<T> machine);
+        public abstract void ReceiveEvent(IStateMachine<T> machine, IStateEvent<T> stateEvent);
     }
 }

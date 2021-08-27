@@ -2,21 +2,10 @@ namespace BAStudio.StatePattern
 {
     public interface IState<T>
 	{
-		IStateMachine<T> StateMachine { get; }
 	    bool AllowUpdate { get; }
-		void OnEntered ();
-		void Update ();
-		void OnLeaving ();
-		void ReceiveEvent (IStateEvent<T> stateEvent);
-	}
-
-	/// <summary>
-	/// The interface is for states that specifically made for not just certain context but also certain state machine class
-	/// </summary>
-	/// <typeparam name="T"></typeparam>
-	/// <typeparam name="M"></typeparam>
-    public interface IState<T, M> : IState<T> where M : IStateMachine<T>
-	{
-		new M StateMachine { get; }
+		void OnEntered (IStateMachine<T> machine);
+		void Update (IStateMachine<T> machine);
+		void OnLeaving (IStateMachine<T> machine);
+		void ReceiveEvent (IStateMachine<T> machine, IStateEvent<T> stateEvent);
 	}
 }
