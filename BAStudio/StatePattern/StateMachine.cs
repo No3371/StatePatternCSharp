@@ -5,8 +5,7 @@ using System.Runtime.CompilerServices;
 
 namespace BAStudio.StatePattern
 {
-
-    public abstract class StateMachine<T> : IStateMachine<T>
+    public abstract class StateMachine<T>
     {
         protected StateMachine(T target)
         {
@@ -18,62 +17,74 @@ namespace BAStudio.StatePattern
 
         public event System.Action<string> DebugOutput;
         public T Target { get; }
-        public IState<T> CurrentState { get; protected set; }
-        public bool AllowUpdate { get; set; }
-        public bool WillPassEvent { get; protected set; }
-        public bool ChangingState { get; protected set; }
-        public event Action<IState<T>, IState<T>> OnStateChanging;
-        public event Action<IState<T>, IState<T>> OnStateChanged;
-        private Dictionary<Type, IState<T>> AutoStateCache { get; set; }
-        public virtual void ChangeState(IState<T> state)
+        public State<T> CurrentState { get; protected set; }
+        public virtual bool AllowUpdate { get; set; }
+        public virtual bool WillPassEvent { get; protected set; }
+        public virtual bool ChangingState { get; protected set; }
+        public event Action<State<T>, State<T>> OnStateChanging;
+        public event Action<State<T>, State<T>> OnStateChanged;
+        protected Dictionary<Type, State<T>> AutoStateCache { get; set; }
+
+        public Dictionary<Type, object> Components { get; private set; }
+        public virtual void ChangeState(State<T> state)
         {
 			var prev = CurrentState;
 			PreStateChange(CurrentState, state);
 			CurrentState = state;
-			CurrentState?.OnEntered(this);
+			DeliverComponents(CurrentState);
+			CurrentState?.OnEntered(this, prev);
 			PostStateChange(prev);
         }
 
-        public virtual void ChangeState<P>(IState<T> state, P parameter) where P : IStateParameter<T>
+        public virtual void ChangeState<P>(State<T> state, P parameter) where P : IStateParameter<T>
         {
 			var prev = CurrentState;
 			PreStateChange(CurrentState, state);
 			CurrentState = state;
-			if (CurrentState is IParameterConsumer<T, P> pc) pc?.OnEntered(parameter);
-			else CurrentState?.OnEntered(this);
+			DeliverComponents(CurrentState);
+			if (CurrentState is IParameterizedState<T> pc) pc?.OnEntered(this, prev, parameter);
+			else CurrentState?.OnEntered(this, prev);
 			PostStateChange(prev);
         }
-        public virtual void ChangeState<S>() where S : IState<T>, new()
+        public virtual void ChangeState<S>() where S : State<T>, new()
 		{
-			if (AutoStateCache == null) AutoStateCache = new Dictionary<Type, IState<T>>();
+			if (AutoStateCache == null) AutoStateCache = new Dictionary<Type, State<T>>();
 			if (!AutoStateCache.ContainsKey(typeof(S))) AutoStateCache.Add(typeof(S), new S());
 			ChangeState(AutoStateCache[typeof(S)]);
 		} 
-        public virtual void ChangeState<S, P>(P parameter) where S : IState<T>, new() where P : IStateParameter<T>
+        public virtual void ChangeState<S, P>(P parameter) where S : State<T>, new() where P : IStateParameter<T>
 		{
-			if (AutoStateCache == null) AutoStateCache = new Dictionary<Type, IState<T>>();
+			if (AutoStateCache == null) AutoStateCache = new Dictionary<Type, State<T>>();
 			if (!AutoStateCache.ContainsKey(typeof(S))) AutoStateCache.Add(typeof(S), new S());
 			ChangeState(AutoStateCache[typeof(S)], parameter);
 		}
+		void DeliverComponents (State<T> state)
+		{
+			if (state is IComponentUser cu)
+			{
+				foreach (var kvp in Components)
+					cu.OnComponentSupplied(kvp.Key, kvp.Value);
+			}
+		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		protected virtual void PreStateChange (IState<T> fromState, IState<T> toState)
+		protected virtual void PreStateChange (State<T> fromState, State<T> toState)
 		{
 			WillPassEvent = false;
 			ChangingState = true;
 			DebugOutput?.Invoke("StateMachine<" + Target.GetType().Name + "> is switching to: " + toState.GetType().Name);
-			fromState?.OnLeaving(this);
+			fromState?.OnLeaving(this, toState);
 			OnStateChanging(fromState, toState);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		protected virtual void PostStateChange (IState<T> fromState)
+		protected virtual void PostStateChange (State<T> fromState)
 		{
 			OnStateChanged(fromState, CurrentState);
 			WillPassEvent = true;
 			ChangingState = false;
 		}
-		
+
 		public virtual void Update ()
 		{
 			if (!AllowUpdate) return;
@@ -88,5 +99,7 @@ namespace BAStudio.StatePattern
 			CurrentState?.ReceiveEvent(this, stateEvent);
 			return true;
         }
+
+
 	}
 }
