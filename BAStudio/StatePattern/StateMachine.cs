@@ -1,11 +1,11 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
 namespace BAStudio.StatePattern
 {
-    public abstract class StateMachine<T>
+    public class StateMachine<T>
     {
         protected StateMachine(T target)
         {
