@@ -74,13 +74,13 @@ namespace BAStudio.StatePattern
 			ChangingState = true;
 			DebugOutput?.Invoke("StateMachine<" + Target.GetType().Name + "> is switching to: " + toState.GetType().Name);
 			fromState?.OnLeaving(this, toState);
-			OnStateChanging(fromState, toState);
+			OnStateChanging?.Invoke(fromState, toState);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		protected virtual void PostStateChange (State<T> fromState)
 		{
-			OnStateChanged(fromState, CurrentState);
+			OnStateChanged?.Invoke(fromState, CurrentState);
 			WillPassEvent = true;
 			ChangingState = false;
 		}
