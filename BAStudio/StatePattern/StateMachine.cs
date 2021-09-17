@@ -7,7 +7,7 @@ namespace BAStudio.StatePattern
 {
     public class StateMachine<T>
     {
-        protected StateMachine(T target)
+        public StateMachine(T target)
         {
             Target = target;
             AllowUpdate = true;
