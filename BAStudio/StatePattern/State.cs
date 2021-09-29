@@ -3,12 +3,7 @@ namespace BAStudio.StatePattern
 {
     public abstract class State<T>
     {
-        protected State()
-        {
-            AllowUpdate = true;
-        }
-
-        public bool AllowUpdate { get; protected set; }
+        public bool AllowUpdate { get; protected set; } = true;
         public abstract void OnEntered(StateMachine<T> machine, State<T> previous);
         public abstract void Update(StateMachine<T> machine);
         public abstract void OnLeaving(StateMachine<T> machine, State<T> next);
