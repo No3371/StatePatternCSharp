@@ -90,7 +90,7 @@ namespace BAStudio.StatePattern
 			if (!AllowUpdate) return;
 			if (Target == null) throw new System.NullReferenceException("Target is null.");
 			if (CurrentState == null) throw new System.NullReferenceException("CurrentState is null. Did you set a state after instantiate this controller?");
-			if (CurrentState.AllowUpdate) CurrentState.Update(this);
+			if (CurrentState.AllowUpdate) CurrentState.Update(this, Target);
 		}
 
         public virtual bool InvokeEvent(IStateEvent<T> stateEvent)
