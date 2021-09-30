@@ -2,11 +2,14 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using System.Text;
 
 namespace BAStudio.StatePattern
 {
     public class StateMachine<T>
     {
+		static StringBuilder DebugStringBuilder { get; set; }
+        public event System.Action<string> DebugOutput;
         public StateMachine(T target)
         {
             Target = target;
@@ -15,7 +18,6 @@ namespace BAStudio.StatePattern
             ChangingState = false;
         }
 
-        public event System.Action<string> DebugOutput;
         public T Target { get; }
         public State<T> CurrentState { get; protected set; }
         public virtual bool AllowUpdate { get; set; }
@@ -24,7 +26,6 @@ namespace BAStudio.StatePattern
         public event Action<State<T>, State<T>> OnStateChanging;
         public event Action<State<T>, State<T>> OnStateChanged;
         protected Dictionary<Type, State<T>> AutoStateCache { get; set; }
-
         public Dictionary<Type, object> Components { get; private set; }
         public virtual void ChangeState(State<T> state)
         {
@@ -32,7 +33,7 @@ namespace BAStudio.StatePattern
 			PreStateChange(CurrentState, state);
 			CurrentState = state;
 			DeliverComponents(CurrentState);
-			CurrentState?.OnEntered(this, prev);
+			CurrentState?.OnEntered(this, prev, Target);
 			PostStateChange(prev);
         }
 
@@ -43,7 +44,7 @@ namespace BAStudio.StatePattern
 			CurrentState = state;
 			DeliverComponents(CurrentState);
 			if (CurrentState is IParameterizedState<T> pc) pc?.OnEntered(this, prev, parameter);
-			else CurrentState?.OnEntered(this, prev);
+			else CurrentState?.OnEntered(this, prev, Target);
 			PostStateChange(prev);
         }
         public virtual void ChangeState<S>() where S : State<T>, new()
@@ -72,14 +73,15 @@ namespace BAStudio.StatePattern
 		{
 			WillPassEvent = false;
 			ChangingState = true;
-			DebugOutput?.Invoke("StateMachine<" + Target.GetType().Name + "> is switching to: " + toState.GetType().Name);
-			fromState?.OnLeaving(this, toState);
+			if (DebugOutput != null) WriteDebug("A StateMachine<{0}> is switching from {1} to {2}.", Target.GetType().Name, fromState?.GetType()?.Name, toState.GetType().Name);
+			fromState?.OnLeaving(this, toState, Target);
 			OnStateChanging?.Invoke(fromState, toState);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		protected virtual void PostStateChange (State<T> fromState)
 		{
+			if (DebugOutput != null) WriteDebug("A StateMachine<{0}> has switched from {1} to {2}.", Target.GetType().Name, fromState?.GetType()?.Name, CurrentState.GetType().Name);
 			OnStateChanged?.Invoke(fromState, CurrentState);
 			WillPassEvent = true;
 			ChangingState = false;
@@ -96,9 +98,18 @@ namespace BAStudio.StatePattern
         public virtual bool InvokeEvent(IStateEvent<T> stateEvent)
         {
 			if (!WillPassEvent || !stateEvent.CanInvoke(CurrentState)) return false;
-			CurrentState?.ReceiveEvent(this, stateEvent);
+			if (DebugOutput != null && CurrentState != null) WriteDebug("A StateMachine<{0}> is invoking {1}, the active state (receiver) is {2}", Target.GetType().Name, CurrentState?.GetType()?.Name, stateEvent.GetType().Name);
+			CurrentState?.ReceiveEvent(this, stateEvent, Target);
 			return true;
         }
+
+		void WriteDebug (string format, object arg0 = null, object arg1 = null, object arg2 = null)
+		{
+			if (DebugStringBuilder == null) DebugStringBuilder = new StringBuilder();
+			DebugStringBuilder.AppendFormat(format, arg0, arg1, arg2);
+			DebugOutput(DebugStringBuilder.ToString());
+			DebugStringBuilder.Clear();
+		}
 
 
 	}
