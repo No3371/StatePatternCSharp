@@ -63,8 +63,24 @@ namespace BAStudio.StatePattern
 		{
 			if (state is IComponentUser cu)
 			{
-				foreach (var kvp in Components)
-					cu.OnComponentSupplied(kvp.Key, kvp.Value);
+                Type stateType = state.GetType();
+                if (Attribute.GetCustomAttribute(stateType, typeof(DontAutoAssignComponent)) != null)
+				{
+					foreach (var prop in stateType.GetProperties())
+					{
+                        Type propType = prop.DeclaringType;
+                        if (Components.TryGetValue(propType, out var comp))
+						{
+							prop.SetValue(state, comp);
+							cu.OnComponentSupplied(propType, comp);
+						}
+					}
+				}
+				else
+				{
+					foreach (var kvp in Components)
+						cu.OnComponentSupplied(kvp.Key, kvp.Value);
+				}
 			}
 		}
 
