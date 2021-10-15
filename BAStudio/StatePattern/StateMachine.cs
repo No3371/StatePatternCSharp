@@ -69,10 +69,11 @@ namespace BAStudio.StatePattern
 			if (state is IComponentUser cu)
 			{
                 Type stateType = state.GetType();
-                if (Attribute.GetCustomAttribute(stateType, typeof(DontAutoAssignComponent)) == null)
+                if (Attribute.GetCustomAttribute(stateType, typeof(DisableAutoComponents)) == null)
 				{
 					foreach (var prop in stateType.GetProperties())
 					{
+						if (prop.GetCustomAttributes(typeof(AutoComponentAttribute), false) == null) continue;
                         Type propType = prop.DeclaringType;
                         if (Components.TryGetValue(propType, out var comp))
 						{
