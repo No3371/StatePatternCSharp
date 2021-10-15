@@ -5,7 +5,7 @@ using System.Text;
 
 namespace BAStudio.StatePattern
 {
-    public class StateMachine<T>
+    public partial class StateMachine<T>
     {
 		static StringBuilder DebugStringBuilder { get; set; }
         public event System.Action<string> DebugOutput;
@@ -18,13 +18,13 @@ namespace BAStudio.StatePattern
         }
 
         public T Target { get; }
-        public State<T> CurrentState { get; protected set; }
+        public State CurrentState { get; protected set; }
         public virtual bool AllowUpdate { get; set; }
         public virtual bool WillPassEvent { get; protected set; }
         public virtual bool ChangingState { get; protected set; }
-        public event Action<State<T>, State<T>> OnStateChanging;
-        public event Action<State<T>, State<T>> OnStateChanged;
-        protected Dictionary<Type, State<T>> AutoStateCache { get; set; }
+        public event Action<State, State> OnStateChanging;
+        public event Action<State, State> OnStateChanged;
+        protected Dictionary<Type, State> AutoStateCache { get; set; }
         Dictionary<Type, object> Components { get; set; }
 		public void SetComponent<PT, CT> (CT obj) where CT : PT
 		{
@@ -32,7 +32,7 @@ namespace BAStudio.StatePattern
 			Components[typeof(PT)] = obj;
 		}
 
-        public virtual void ChangeState(State<T> state)
+        public virtual void ChangeState(State state)
         {
 			var prev = CurrentState;
 			PreStateChange(CurrentState, state);
@@ -42,7 +42,7 @@ namespace BAStudio.StatePattern
 			PostStateChange(prev);
         }
 
-        public virtual void ChangeState<P>(State<T> state, P parameter) where P : IStateParameter<T>
+        public virtual void ChangeState<P>(State state, P parameter) where P : IStateParameter<T>
         {
 			var prev = CurrentState;
 			PreStateChange(CurrentState, state);
@@ -52,19 +52,19 @@ namespace BAStudio.StatePattern
 			else CurrentState?.OnEntered(this, prev, Target);
 			PostStateChange(prev);
         }
-        public virtual void ChangeState<S>() where S : State<T>, new()
+        public virtual void ChangeState<S>() where S : State, new()
 		{
-			if (AutoStateCache == null) AutoStateCache = new Dictionary<Type, State<T>>();
+			if (AutoStateCache == null) AutoStateCache = new Dictionary<Type, State>();
 			if (!AutoStateCache.ContainsKey(typeof(S))) AutoStateCache.Add(typeof(S), new S());
 			ChangeState(AutoStateCache[typeof(S)]);
 		} 
-        public virtual void ChangeState<S, P>(P parameter) where S : State<T>, new() where P : IStateParameter<T>
+        public virtual void ChangeState<S, P>(P parameter) where S : State, new() where P : IStateParameter<T>
 		{
-			if (AutoStateCache == null) AutoStateCache = new Dictionary<Type, State<T>>();
+			if (AutoStateCache == null) AutoStateCache = new Dictionary<Type, State>();
 			if (!AutoStateCache.ContainsKey(typeof(S))) AutoStateCache.Add(typeof(S), new S());
 			ChangeState(AutoStateCache[typeof(S)], parameter);
 		}
-		void DeliverComponents (State<T> state)
+		protected virtual void DeliverComponents (State state)
 		{
 			if (state is IComponentUser cu)
 			{
@@ -91,7 +91,7 @@ namespace BAStudio.StatePattern
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		protected virtual void PreStateChange (State<T> fromState, State<T> toState)
+		protected virtual void PreStateChange (State fromState, State toState)
 		{
 			WillPassEvent = false;
 			ChangingState = true;
@@ -101,7 +101,7 @@ namespace BAStudio.StatePattern
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		protected virtual void PostStateChange (State<T> fromState)
+		protected virtual void PostStateChange (State fromState)
 		{
 			if (DebugOutput != null) WriteDebug("A StateMachine<{0}> has switched from {1} to {2}.", Target.GetType().Name, fromState?.GetType()?.Name, CurrentState.GetType().Name);
 			OnStateChanged?.Invoke(fromState, CurrentState);
@@ -125,7 +125,7 @@ namespace BAStudio.StatePattern
 			return true;
         }
 
-		void WriteDebug (string format, object arg0 = null, object arg1 = null, object arg2 = null)
+		protected virtual void WriteDebug (string format, object arg0 = null, object arg1 = null, object arg2 = null)
 		{
 			if (DebugStringBuilder == null) DebugStringBuilder = new StringBuilder();
 			DebugStringBuilder.AppendFormat(format, arg0, arg1, arg2);

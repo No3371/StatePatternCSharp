@@ -1,7 +1,7 @@
 namespace BAStudio.StatePattern
 {
-    public interface IParameterizedState<T> 
+    public interface IParameterizedState<T>
 	{
-		void OnEntered(StateMachine<T> machine, State<T> previous, IStateParameter<T> parameter);
+		void OnEntered(StateMachine<T> machine, StateMachine<T>.State previous, IStateParameter<T> parameter);
 	}
 }

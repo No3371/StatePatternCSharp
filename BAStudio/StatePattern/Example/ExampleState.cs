@@ -5,6 +5,15 @@ using BAStudio.StatePattern;
 
 namespace statepatterncsharp.BAStudio.StatePattern.Example
 {
+    public class ExampleCustomMachine<T> : StateMachine<T>
+    {
+        public ExampleCustomMachine(T target) : base(target) {}
+    }
+
+    public class MovementMachine : StateMachine<Movement>
+    {
+        public MovementMachine(Movement target) : base(target) {}
+    }
 
     public abstract class Movement
     {
@@ -25,14 +34,14 @@ namespace statepatterncsharp.BAStudio.StatePattern.Example
             stateMachine.Update();
         }
         
-        public class Grounded : State<Movement>
+        public class Grounded : StateMachine<Movement>.State
         {
-            public override void OnEntered(StateMachine<Movement> machine, State<Movement> previous, Movement context)
+            public override void OnEntered(StateMachine<Movement> machine, StateMachine<Movement>.State previous, Movement context)
             {
                 context.Velocity.SetY(0);
             }
 
-            public override void OnLeaving(StateMachine<Movement> machine, State<Movement> next, Movement context) {}
+            public override void OnLeaving(StateMachine<Movement> machine, StateMachine<Movement>.State next, Movement context) {}
 
             public override void Update(StateMachine<Movement> machine, Movement context)
             {
@@ -50,11 +59,11 @@ namespace statepatterncsharp.BAStudio.StatePattern.Example
             }
         }
 
-        public class Falling : State<Movement>
+        public class Falling : StateMachine<Movement>.State
         {
-            public override void OnEntered(StateMachine<Movement> machine, State<Movement> previous, Movement context) {}
+            public override void OnEntered(StateMachine<Movement> machine, StateMachine<Movement>.State previous, Movement context) {}
 
-            public override void OnLeaving(StateMachine<Movement> machine, State<Movement> next, Movement context) {}
+            public override void OnLeaving(StateMachine<Movement> machine, StateMachine<Movement>.State next, Movement context) {}
 
             public override void Update(StateMachine<Movement> machine, Movement context)
             {
@@ -68,14 +77,14 @@ namespace statepatterncsharp.BAStudio.StatePattern.Example
             }
         }
 
-        public class Jumping : State<Movement>
+        public class Jumping : StateMachine<Movement>.State
         {
-            public override void OnEntered(StateMachine<Movement> machine, State<Movement> previous, Movement context)
+            public override void OnEntered(StateMachine<Movement> machine, StateMachine<Movement>.State previous, Movement context)
             {
                 context.Velocity += new Vector3(0, 1000, 0);
             }
 
-            public override void OnLeaving(StateMachine<Movement> machine, State<Movement> next, Movement context) {}
+            public override void OnLeaving(StateMachine<Movement> machine, StateMachine<Movement>.State next, Movement context) {}
 
             public override void Update(StateMachine<Movement> machine, Movement context)
             {
