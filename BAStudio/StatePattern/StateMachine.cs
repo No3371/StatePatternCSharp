@@ -64,7 +64,7 @@ namespace BAStudio.StatePattern
 			if (state is IComponentUser cu)
 			{
                 Type stateType = state.GetType();
-                if (Attribute.GetCustomAttribute(stateType, typeof(DontAutoAssignComponent)) != null)
+                if (Attribute.GetCustomAttribute(stateType, typeof(DontAutoAssignComponent)) == null)
 				{
 					foreach (var prop in stateType.GetProperties())
 					{
