@@ -1,5 +1,4 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -26,7 +25,13 @@ namespace BAStudio.StatePattern
         public event Action<State<T>, State<T>> OnStateChanging;
         public event Action<State<T>, State<T>> OnStateChanged;
         protected Dictionary<Type, State<T>> AutoStateCache { get; set; }
-        public Dictionary<Type, object> Components { get; private set; }
+        Dictionary<Type, object> Components { get; set; }
+		public void SetComponent<PT, CT> (CT obj) where CT : PT
+		{
+			if (Components == null) Components = new Dictionary<Type, object>();
+			Components[typeof(PT)] = obj;
+		}
+
         public virtual void ChangeState(State<T> state)
         {
 			var prev = CurrentState;
