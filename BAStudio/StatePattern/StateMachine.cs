@@ -13,14 +13,12 @@ namespace BAStudio.StatePattern
         {
             Target = target;
             AllowUpdate = true;
-            WillPassEvent = false;
             ChangingState = false;
         }
 
         public T Target { get; }
         public State CurrentState { get; protected set; }
         public virtual bool AllowUpdate { get; set; }
-        public virtual bool WillPassEvent { get; protected set; }
         public virtual bool ChangingState { get; protected set; }
         public event Action<State, State> OnStateChanging;
         public event Action<State, State> OnStateChanged;
@@ -93,7 +91,6 @@ namespace BAStudio.StatePattern
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		protected virtual void PreStateChange (State fromState, State toState)
 		{
-			WillPassEvent = false;
 			ChangingState = true;
 			if (DebugOutput != null) WriteDebug("A StateMachine<{0}> is switching from {1} to {2}.", Target.GetType().Name, fromState?.GetType()?.Name, toState.GetType().Name);
 			fromState?.OnLeaving(this, toState, Target);
@@ -105,7 +102,6 @@ namespace BAStudio.StatePattern
 		{
 			if (DebugOutput != null) WriteDebug("A StateMachine<{0}> has switched from {1} to {2}.", Target.GetType().Name, fromState?.GetType()?.Name, CurrentState.GetType().Name);
 			OnStateChanged?.Invoke(fromState, CurrentState);
-			WillPassEvent = true;
 			ChangingState = false;
 		}
 
@@ -119,7 +115,7 @@ namespace BAStudio.StatePattern
 
         public virtual bool InvokeEvent(IStateEvent<T> stateEvent)
         {
-			if (!WillPassEvent || !stateEvent.CanInvoke(CurrentState)) return false;
+			if (!stateEvent.CanInvoke(CurrentState)) return false;
 			if (DebugOutput != null && CurrentState != null) WriteDebug("A StateMachine<{0}> is invoking {1}, the active state (receiver) is {2}", Target.GetType().Name, CurrentState?.GetType()?.Name, stateEvent.GetType().Name);
 			CurrentState?.ReceiveEvent(this, stateEvent, Target);
 			return true;
