@@ -63,12 +63,6 @@ namespace BAStudio.StatePattern
 			ChangeState(AutoStateCache[typeof(S)], parameter);
 		}
 
-        public virtual void ChangeState<S, P>(P parameter) where S : State, new() where P : IStateParameter<T>
-		{
-			if (AutoStateCache == null) AutoStateCache = new Dictionary<Type, State>();
-			if (!AutoStateCache.ContainsKey(typeof(S))) AutoStateCache.Add(typeof(S), new S());
-			ChangeState(AutoStateCache[typeof(S)], parameter);
-		}
 		protected virtual void DeliverComponents (State state)
 		{
 			if (state is IComponentUser cu)
