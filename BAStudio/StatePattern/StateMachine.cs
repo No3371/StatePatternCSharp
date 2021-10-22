@@ -46,8 +46,7 @@ namespace BAStudio.StatePattern
 			PreStateChange(CurrentState, state);
 			CurrentState = state;
 			DeliverComponents(CurrentState);
-			if (CurrentState is IParameterizedState<T> pc) pc?.OnEntered(this, prev, parameter);
-			else CurrentState?.OnEntered(this, prev, Target);
+			state.OnEntered(this, prev, Target, parameter);
 			PostStateChange(prev);
         }
         public virtual void ChangeState<S>() where S : State, new()
@@ -55,7 +54,15 @@ namespace BAStudio.StatePattern
 			if (AutoStateCache == null) AutoStateCache = new Dictionary<Type, State>();
 			if (!AutoStateCache.ContainsKey(typeof(S))) AutoStateCache.Add(typeof(S), new S());
 			ChangeState(AutoStateCache[typeof(S)]);
-		} 
+		}
+
+        public virtual void ChangeState<S>(IStateParameter<T> parameter) where S : State, new()
+		{
+			if (AutoStateCache == null) AutoStateCache = new Dictionary<Type, State>();
+			if (!AutoStateCache.ContainsKey(typeof(S))) AutoStateCache.Add(typeof(S), new S());
+			ChangeState(AutoStateCache[typeof(S)], parameter);
+		}
+
         public virtual void ChangeState<S, P>(P parameter) where S : State, new() where P : IStateParameter<T>
 		{
 			if (AutoStateCache == null) AutoStateCache = new Dictionary<Type, State>();
