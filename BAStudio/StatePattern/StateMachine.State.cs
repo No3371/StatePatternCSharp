@@ -9,7 +9,13 @@ namespace BAStudio.StatePattern
 			/// It is abstract because all states should be very clear about what they do.
 			/// </summary>
 			public abstract void OnEntered(StateMachine<T> machine, State previous, T context, IStateParameter<T> parameter = null);
+			/// <summary>
+			/// It is abstract because all states should be very clear about what they do.
+			/// </summary>
 			public abstract void Update(StateMachine<T> machine, T context);
+			/// <summary>
+			/// It is abstract because all states should be very clear about what they do.
+			/// </summary>
 			public abstract void OnLeaving(StateMachine<T> machine, State next, T context);
 			public virtual void ReceiveEvent(StateMachine<T> machine, IStateEvent<T> stateEvent, T context) {}
 		}
