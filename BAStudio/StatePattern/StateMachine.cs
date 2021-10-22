@@ -7,6 +7,9 @@ namespace BAStudio.StatePattern
 {
     public partial class StateMachine<T>
     {
+		/// <summary>
+		/// Lazily initialized.
+		/// </summary>
 		static StringBuilder DebugStringBuilder { get; set; }
         public event System.Action<string> DebugOutput;
         public StateMachine(T target)
@@ -15,9 +18,11 @@ namespace BAStudio.StatePattern
             AllowUpdate = true;
             ChangingState = false;
         }
-
         public T Target { get; }
         public State CurrentState { get; protected set; }
+		/// <summary>
+		/// If false, Update() simply returns immediately.
+		/// </summary>
         public virtual bool AllowUpdate { get; set; }
         public virtual bool ChangingState { get; protected set; }
         public event Action<State, State> OnStateChanging;
@@ -30,6 +35,11 @@ namespace BAStudio.StatePattern
 			Components[typeof(PT)] = obj;
 		}
 
+		/// <summary>
+		/// <para>Change the state to the provide instance.</para>
+		/// <para>It is recommended to use the generic version instead.</para>
+		/// <para>However, this could be useful in situations like state instances carry different data, or a non-stateful state is shared by massive amount of StateMachines.</para>
+		/// </summary>
         public virtual void ChangeState(State state)
         {
 			var prev = CurrentState;
@@ -40,6 +50,11 @@ namespace BAStudio.StatePattern
 			PostStateChange(prev);
         }
 
+		/// <summary>
+		/// <para>Change the state to the provide instance, with parameter supplied.</para>
+		/// <para>It is recommended to use the generic version instead.</para>
+		/// <para>However, this could be useful in situations like state instances carry different data, or a non-stateful state is shared by massive amount of StateMachines.</para>
+		/// </summary>
         public virtual void ChangeState<P>(State state, P parameter) where P : IStateParameter<T>
         {
 			var prev = CurrentState;
@@ -49,6 +64,11 @@ namespace BAStudio.StatePattern
 			state.OnEntered(this, prev, Target, parameter);
 			PostStateChange(prev);
         }
+
+		/// <summary>
+		/// <para>Change the state to the specified type.</para>
+		/// <para>The StateMachine automatically manages and keeps the state objects used.</para>
+		/// </summary>
         public virtual void ChangeState<S>() where S : State, new()
 		{
 			if (AutoStateCache == null) AutoStateCache = new Dictionary<Type, State>();
@@ -56,6 +76,10 @@ namespace BAStudio.StatePattern
 			ChangeState(AutoStateCache[typeof(S)]);
 		}
 
+		/// <summary>
+		/// <para>Change the state to the specified type, with parameter supplied.</para>
+		/// <para>The StateMachine automatically manages and keeps the state objects used.</para>
+		/// </summary>
         public virtual void ChangeState<S>(IStateParameter<T> parameter) where S : State, new()
 		{
 			if (AutoStateCache == null) AutoStateCache = new Dictionary<Type, State>();
