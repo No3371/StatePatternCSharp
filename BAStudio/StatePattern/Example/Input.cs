@@ -1,4 +1,4 @@
-namespace statepatterncsharp.BAStudio.StatePattern.Example
+namespace BAStudio.StatePattern.Example
 {
     public struct Input
     {
