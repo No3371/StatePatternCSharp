@@ -1,16 +1,88 @@
 # StatePatternC#
-A simple framework does nothing on its own σ (´・ω・`), made to help you keep your code structure simple.  
-It's quite useful in case you need a subject to behave differently in different sitautions, especially you want it to transform swiftly between different logic.
+A simple framework does nothing on its own σ (´・ω・`), made to help you keep your code readable.
+It's quite useful in case you need a subject to behave differently in different sitautions, especially you want it to switch swiftly between different logic.
+The concept is pulling out the actual worker logic from a class and put in different States, transform the original object into a data storage / handle.
 
+## Features
+- Easily create, edit, debug system behavior without messing with loads of code
+- Use Parameter and Event to easily integrate/communicate with other parts of the program
+- Component System (Dependency Injection) to make it even better
 
+## Overview
+- class **StateMachine<T>**: It manage states of its assigned subject which is of type T.
+- class **StateMachine<T>.State**: A piece of code defining how the subject should behave.
+- interface **IStateParameter<T>**: Objects of a type implements this can be passed when changing state.
+- interface **IStateEvent<T>**: Objects of a type implements this can be passed anytime to the active state.
+- interface **IComponentUser<T>**: States implements this supports Dependency Injection.
 
-```INFO
-The project is rebuilt from ground up in August 2021, the README does not apply to current version until it's rewritten.
+## Getting Started
+
+### Create a subject
+
+Consider we are making a game, and now we want to implement the main game flow with this framework. We start with a `Game` class:
+
+```csharp
+public partial class Game
+{
+    StateMachine<Game> _stateMachine;
+    public Game()
+    {
+        _stateMachine = new StateMachine<Game>(this);
+        _stateMachine.SetComponent<ILogger, SimpleLogger>(new SimpleLogger()); // The SimpleLogger is available to all states, we'll talk about this later
+        _stateMachine.ChangeState<Init>(); // Set the first state
+    }
+
+    public void Update () => _stateMachine.Update();
+}
 ```
 
+The StateMachine<T> is like a plugin to any class. Very few changes are needed to use this framework, even if it's not a fresh new class, we can attach StateMachine to it to apply state pattern.
 
-## Concept
-To pull out the actual worker logic from a class and put in different States, kind of shape the original object into a data storage / handle.
+Now let's create the first state, `Init`:
+
+```csharp
+public class Init : StateMachine<Game>.State
+{
+    Task _setupTask;
+    public override void OnEntered(StateMachine<Game> machine, StateMachine<Game>.State previous, Game context, IStateParameter<Game> parameter = null)
+    {
+        context.SetupStuff();
+        _setupTask = context.SetupAsyncStuff();
+    }
+
+    public override void OnLeaving(StateMachine<Game> machine, StateMachine<Game>.State next, Game context) {}
+
+    public override void Update(StateMachine<Game> machine, Game context)
+    {
+        if (_setupTask.IsCompleted)
+        {
+            machine.ChangeState<InMainMenu>();
+        }
+    }
+
+    public void OnComponentSupplied(Type t, object o) {}
+}
+```
+
+A state is a child class of StateMachine<T>.State, there are 3 methods must be implemented:
+
+- `OnEntered` is executed whenever the StateMachine switched the active state to it.
+- `Update` is executed whenever the StateMachine's Update() get successfully called.
+- `OnLeaving` is executed whenever the StateMachine switched from it to other state.
+
+
+
+
+
+## FAQ
+- The abstract methods in States are so annoything! How would I type all those for every state?
+
+    I'm sorry about that, that's the result of a lot of design decisions, I personally use IDE (VSCode + Omnisharp) to populate stuff in less then a second so it's not a deal IMO.
+
+- Why States are sub classes of StateMachines?
+
+    To overcome generic definition cycle problem.
+
 
 ## Usage
 The framework is composed of 2 parts: **StateMachine<T>** and **State<T>**.  
