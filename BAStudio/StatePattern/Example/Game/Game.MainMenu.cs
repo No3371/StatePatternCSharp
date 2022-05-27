@@ -7,8 +7,8 @@ namespace BAStudio.StatePattern.Example.Game
             public override void OnEntered(StateMachine<Game> machine, StateMachine<Game>.State previous, Game context, IStateParameter<Game> parameter = null)
             {
                 // A fake MainMenu. In realworld, is usually a UI object created. For example, in Unity, a MainMenu prefab should be loaded before we proceed.
-                SingletonLocator.SingletonLocator<MainMenu>.Instance = new MainMenu();
-                SingletonLocator.SingletonLocator<MainMenu>.Instance.Show();
+                // SingletonLocator.SingletonLocator<MainMenu>.Instance = new MainMenu();
+                // SingletonLocator.SingletonLocator<MainMenu>.Instance.Show();
             }
 
             public override void OnLeaving(StateMachine<Game> machine, StateMachine<Game>.State next, Game context) {}
@@ -30,7 +30,7 @@ namespace BAStudio.StatePattern.Example.Game
                                 machine.ChangeState<NewGame>();
                                 break;
                             case Interaction.Load:
-                                SingletonLocator.SingletonLocator<MainMenu>.Instance.ShowLoadSaveUI();
+                                // SingletonLocator.SingletonLocator<MainMenu>.Instance.ShowLoadSaveUI();
                                 break;
                             case Interaction.Exit:
                                 context.ExitGame();
