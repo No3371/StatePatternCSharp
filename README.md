@@ -1,22 +1,22 @@
 # StatePatternC#
 
-(👷 ATM this repo contains a `EnumExtension` class which is only for Unity, but can easily changed for .NET by **replacing all `UnsafeUtility.SizeOf` with `Unsafe.SizeOf`**.)
+(👷 ATM this repo contains an `EnumExtension` class which is only for Unity, but can be easily changed for .NET by **replacing all `UnsafeUtility.SizeOf` with `Unsafe.SizeOf`**.)
 
-Another state pattern framework carefully crafted for writing better code.
-The concept is pulling out the actual worker logic from a class and split the code into different States, transform the original object into a data storage / handle.
+Another state pattern framework crafted carefully for writing better code.
+The concept is to pull out the actual worker logic from a class and split the code into different States, transforming the original object into a data storage/handle.
 
 Note: this implements a Passive StateMachine, it does nothing on its own and needs to be ticked by user code.
 
 ## Features
-- Easily creates, edits, debugs object behaviors without messing with unrelated code
+- Easily creates, edits, and debugs object behaviors without messing with unrelated code
 - Make use of external parameter/events object to easily integrate/communicate with other parts of the program
 - Component System (Dependency Injection) to make it even better
-- Elegant design for the best develper experience
+- Elegant design for the best developer experience
 
 ## Overview
-- class **StateMachine<T>**: It manage states of its assigned subject which is of type T.
-- class **StateMachine<T>.State**: The base class of all states, derive to create behaviour of your subject T.
-- interface **IComponentUser<T>**: States implements this supports Dependency Injection.
+- class **StateMachine<T>**: It manages the states of its assigned subject which is of type T.
+- class **StateMachine<T>.State**: The base class of all states.
+- interface **IComponentUser<T>**: States implement this supports Dependency Injection.
 - interface **IEventReceiverState<T, E>**: States implement this can receiver events of type E from StateMachine.
 
 ## Getting Started
@@ -48,15 +48,15 @@ public partial class Game
 }
 ```
 
-The framework does not require your subject T to inherit something. Instead, you new a `StateMachine<T>` somewhere then you are good. Declare the StateMachine within your subject T is recommended. Very small change to a existed subject class is needed to use this framework, even if it's not a fresh new class, we can attach a StateMachine to it to start applying state pattern.
+The framework does not require your subject T to inherit something. Instead, just new a `StateMachine<T>` somewhere then you are good. Declare the StateMachine within your subject T is recommended. Not much change to existed subject class is needed to use this framework, even if it's not a fresh new class, we can attach a StateMachine to it to start applying state pattern.
 
-There are several intresting points in the above codes:
-- It's `partial`, this is because the state classes are declared as `Game`'s subclasses and split to different files.
+There are several interesting points in the above codes:
+- It's `partial`, this is because the state classes are declared as `Game`'s subclasses and split into different files.
     - This is recommended that the states can access private members of the subject.
 - There's a `SetComponent` statement. This is the Dependency Injection feature; we will talk about this later.
 - We `ChangeState` immediately after the machine is newed.
     - There are 2 versions of `ChangeState`: generic/instanced.
-    - In the example code generic version is used, the Init is automatically newed and cached by the machine.
+    - In the example code generic version is used, and the Init is automatically newed and cached by the machine.
 
 ### Create a state
 Now let's take a look at `Init` state:
@@ -87,27 +87,27 @@ public partial class Game
 }
 ```
 
-A state is a child class of StateMachine<T>.State, there are 3 methods must be implemented:
+A state is a child class of StateMachine<T>.State, there are 3 methods that must be implemented:
 
 - `OnEntered` is executed whenever the StateMachine switched the active state to it.
 - `Update` is executed whenever the StateMachine's Update() get successfully called.
-- `OnLeaving` is executed whenever the StateMachine switched away from it to other state.
+- `OnLeaving` is executed whenever the StateMachine switched away from it to another state.
 
-The method signatures are long and complex, this is how it is after several attempts to refactor across several years. As long as you utilize your IDE and not hand-typing everything it should not be a problem.
+The method signatures are long and complex, this is how it is after several attempts to refactor across several years. As long as you utilize your IDE and do not hand-typing everything it should not be a problem.
 
-For `Init` state, we do everything is required to initialize the game, Assuming the sync `SetupStuff()` and an async `SetupAsyncStuff()` are all we need, we keep the state updated and `ChangeState<InMainMenu>` when we know that we are good to go.
+For `Init` state, we do everything required to initialize the game, Assuming the sync `SetupStuff()` and an async `SetupAsyncStuff()` are all we need, we keep the state updated and `ChangeState<InMainMenu>` when we know that we are good to go.
 
 In the `ChangeState<InMainMenu>` call, the machine will call `Init.OnLeaving` then `InMainMenu.OnEntered`.
 
-Noted that there's no return for these method. For `Update()`, this means we can have statements after  a `ChangeState()` call, but always return after `ChangeState()` call should makes it easier to maintain.
+Noted that there's no return for these methods. For `Update()`, this means we can have statements after a `ChangeState()` call, but always returning after `ChangeState()` call should make it easier to maintain.
 
-That's all. Well, at least for basic usage of the framework, you are good to go. Keep reading if you are interested in complete features  some practical examples.
+That's all. Well, at least for basic usage of the framework, you are good to go. Keep reading if you are interested in all features and some practical examples.
 
 ### Parameters
 
-All `ChangeState` methods takes an optional `object parameter`, it will be passed along to both the from/to states. This allows states to know more about a transition.
+Both `ChangeState()` implementations take an optional `object parameter`, which will be passed along to both the from/to states. This allows states to know more about a transition.
 
-The parameter is of type `object`, this means anything can be passed. For example, pass an Exception to a Game.Exiting state, we can add some code to upload the error stack trace to out server.
+The parameter is of type `object`, this means anything can be passed. For example, pass an Exception to a Game.Exiting state, we can add some code to upload the error stack trace to remote servers.
 
 The recommended practice is to switch on the object:
 
@@ -141,9 +141,9 @@ struct NewGameOptions
 
 ### Events
 
-`StateMachine<T>` provides a `SendEvent<E>(E ev)` method that will send the ev to all active states implemented with `IEventReceiverState<T, E>`.
+`StateMachine<T>` provides a `SendEvent<E>(E ev)` method that will send the `ev` to all active states implemented with `IEventReceiverState<T, E>`.
 
-The `IEventReceiverState<T, E>` has an type parameter E, this means a State must implement `ReceiveEvent()` for every E it's interested in. This is easier to maintain and can avoid boxing/unboxing with `object`.
+The `IEventReceiverState<T, E>` has a type parameter E, this means a State must implement `ReceiveEvent()` for every E it's interested in. This is easier to maintain and can avoid boxing/unboxing with `object`.
 
 There are also some pre-built events used by the framework itself, users can implement the interface for these:
 - `InternalSignal`: an Enum of simple signals like MachinePaused and MachineResumed.
@@ -205,18 +205,18 @@ public partial class Game
 States implements `IComponentuser` interface are delivered the components provided through `StateMachine.SetComponent()`.
 
 This happens when:
-- For `ChangeState(State)`, Components Delivering always happens to the next state everytime.
-- For `ChangeState<S>()`, there's a configuration flag will decide the behaviour.
+- For `ChangeState(State)`, Components Delivering always happens every time.
+- For `ChangeState<S>()`, there's a configuration flag that will decide the behavior.
     - (Noted that this generic version use internally newed/cached states)
-    - If `InjectionOnCachedStateOnlyNew` is set to true, For every S, Components Delivering happens only at the first time `ChangeState<S>()` is called. Otherwise it also happens everytime `ChangeState<S>()` is called.
+    - If `InjectionOnCachedStateOnlyNew` is set to true, For every S, Components Delivering happens only at the first time `ChangeState<S>()` is called. Otherwise, it also happens every time `ChangeState<S>()` is called.
 
-What exact does Components Delivering do?
+What exactly does Components Delivering do?
 
 The framework provides auto fill-in functionality and that's what makes it "Dependency Injection" (I don't know, is it?)
 
-By default, all setter properties (even private ones) marked with `[AutoComponent]` will be filled in, given a component of matching type is provided. After a successful fill-in, `OnComponentSupplied` is called once for that one component filled-in.
+By default, all setter properties (even private ones) marked with `[AutoComponent]` will be filled in, given a component of matching type is provided. After a successful fill-in, `OnComponentSupplied` is called once for that one component filled in.
 
-You can mark a state with `[DisableAutoComponents]` and it will disable the auto fill-in for that state, instead, it simply calls `OnComponentSupplied` for every components provided and leave the rest to you.
+You can mark a state with `[DisableAutoComponents]` and it will disable the auto fill-in for that state, instead, it simply calls `OnComponentSupplied` for every component provided and leave the rest to you.
 
 If an `IComponentuser` state is not marked with `[DisableAutoComponents]` but no `[AutoComponent]` is found, it's treated like it's marked with `[DisableAutoComponents]`.
 
@@ -225,39 +225,39 @@ As you may have noticed, in this example it is an `ILogger` while in the first e
 
 ### PopupStates
 
-PopupStates are like fire-and-forget states, there's no state transition. There's no limit on how many & what type of PopupStates is active at same time.
+PopupStates are like fire-and-forget states, there's no state transition. There's no limit on how many & what type of PopupStates is active at the same time.
 
-It's a good for fit for something related to the your subject, but is simple/transient. For example, debuffs in RPG games.
+It's a good fit for something related to the subject but is simple/transient. For example, debuffs in RPG games.
 
-At some degree it also allows multi states at same time. But if you really needs that, consider trying out `MultiTrackStateMachine` which has "SideTracks" alongside the main State.
+To some degree, it also allows multi states at the same time. But if you really need that, consider trying out `MultiTrackStateMachine` which has "SideTracks" alongside the main State.
 
 (It's inspired by... Moodlets, from Sims4, when something happens your sim gets a mood; A mood is of some type of emotion and has a reason; The mood ends after some time or due to something happens.)
 
 ### Debug The Transitions
-To log the state transitition, subscribe to the string delegate `StateMachine<T>.DebugOutput`.
+To log state transitions, subscribe to the string delegate `StateMachine<T>.DebugOutput`.
 
 ## FAQ
-- The abstract methods in States are so annoything! How would I type all those for every state?
+- The abstract methods in States are so annoying! How would I type all those for every state?
 
-    This is actually the simplest yet usable interface I found. I personally use IDE (VSCode + Omnisharp) to populate stuff in less then a second so it's not a deal IMO.
+    This is actually the simplest yet most usable interface I figured. I personally use IDE (VSCode + Omnisharp) to populate stuff in less than a second so it's not a deal IMO.
 
-- Why States are sub classes of StateMachines?
+- Why States are sub-classes of StateMachines?
 
     The framework is built around generic, I explored the design several times and there's no better option for this framework until I find a better solution of nested generic parameters.
 
-- What is context? What is Target?
+- What is Context? What is Target?
 
-    Context and Target indicate same thing: the subject controlled by the state machine, to the states, it's Context; to the state machine, it's the Target.
+    Context and Target indicate the same thing: the subject controlled by the state machine, to the states, it's Context; to the state machine, it's the Target.
 
 - Is `StateMachine` thread-safe?
 
-    It's not. At the moment I believe the best multi-threaded usage will be like a StateMachine only gets updated by 1 thread (One thread to many machines). 
+    It's not. At the moment I believe the best multi-threaded usage will be like every StateMachine only gets updated by 1 thread (One thread to many machines). 
 
 ## Examples
 
 ### Double Jumping
 
-This example shows how to easily create a double-jump behaviour with only 3 states.
+This example shows how to easily create a double-jump behavior with only 3 states.
 
 ```csharp
 public class Jumping : StateMachine<Movement>.State
