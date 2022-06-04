@@ -4,8 +4,10 @@ namespace BAStudio.StatePattern.Example
     {
         public class Jumping : StateMachine<Movement>.State
         {
+            bool isDoubleJumping;
             public override void OnEntered(StateMachine<Movement> machine, StateMachine<Movement>.State previous, Movement context, object parameter = null)
             {
+                isDoubleJumping = previous is Jumping;
                 switch (parameter)
                 {
                     case JumpParameter jp:
@@ -25,16 +27,23 @@ namespace BAStudio.StatePattern.Example
 
             public override void Update(StateMachine<Movement> machine, Movement context)
             {
-                context.Velocity -= new Vector3(0, 9.8f, 0);
-                context.GroundCheck();
-                if (context.IsGrounded)
+                context.ApplyGravity();
+
+                if (context.GroundCheck())
                 {
                     machine.ChangeState<Grounded>();
                     return;
                 }
+
+                if (!isDoubleJumping && context.CurrentInput.Jump)
+                {
+                    machine.ChangeState<Jumping>(); // Jump again
+                    return;
+                }
+
                 if (context.Velocity.y < 0)
                 {
-                    machine.ChangeState<Falling>();
+                    machine.ChangeState<Falling>(isDoubleJumping);
                     return;
                 }
             }

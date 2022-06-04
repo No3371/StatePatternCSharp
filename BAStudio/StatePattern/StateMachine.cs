@@ -11,9 +11,6 @@ namespace BAStudio.StatePattern
 {
     public partial class StateMachine<T>
     {
-        /// <summary>
-        /// Lazily initialized.
-        /// </summary>
         static StringBuilder DebugStringBuilder { get; set; }
         protected System.Action<string> debugOutput;
 

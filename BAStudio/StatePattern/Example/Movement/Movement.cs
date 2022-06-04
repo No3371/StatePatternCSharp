@@ -17,7 +17,9 @@ namespace BAStudio.StatePattern.Example
         Input CurrentInput { get; set; }
         bool IsGrounded { get; set; }
         Vector3 Velocity { get; set; }
-        public abstract void GroundCheck ();
+        public abstract bool GroundCheck ();
+
+        void ApplyGravity() {}
         void Update () // Called regularly
         {
             _stateMachine.Update();
