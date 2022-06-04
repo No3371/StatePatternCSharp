@@ -10,13 +10,13 @@ namespace BAStudio.StatePattern.Example.Game
         {
             [AutoComponent] ILogger Logger { get; }
             Task _setupTask;
-            public override void OnEntered(StateMachine<Game> machine, StateMachine<Game>.State previous, Game context, IStateParameter<Game> parameter = null)
+            public override void OnEntered(StateMachine<Game> machine, StateMachine<Game>.State previous, Game context, object parameter = null)
             {
                 context.SetupStuff();
                 _setupTask = context.SetupAsyncStuff();
             }
 
-            public override void OnLeaving(StateMachine<Game> machine, StateMachine<Game>.State next, Game context) {}
+            public override void OnLeaving(StateMachine<Game> machine, StateMachine<Game>.State next, Game context, object parameter = null) {}
 
             public override void Update(StateMachine<Game> machine, Game context)
             {

@@ -4,12 +4,12 @@ namespace BAStudio.StatePattern.Example
     {
         public class Grounded : StateMachine<Movement>.State
         {
-            public override void OnEntered(StateMachine<Movement> machine, StateMachine<Movement>.State previous, Movement context, IStateParameter<Movement> parameter = null)
+            public override void OnEntered(StateMachine<Movement> machine, StateMachine<Movement>.State previous, Movement context, object parameter = null)
             {
                 context.Velocity.SetY(0);
             }
 
-            public override void OnLeaving(StateMachine<Movement> machine, StateMachine<Movement>.State next, Movement context) {}
+            public override void OnLeaving(StateMachine<Movement> machine, StateMachine<Movement>.State next, Movement context, object parameter = null) {}
 
             public override void Update(StateMachine<Movement> machine, Movement context)
             {

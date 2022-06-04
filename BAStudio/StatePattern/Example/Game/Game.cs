@@ -15,7 +15,7 @@ namespace BAStudio.StatePattern.Example.Game
         }
 
         /// <summary>
-        /// Assuming it's called 60 times/s
+        /// Assuming this get called 60 times/s
         /// </summary>
         public void Update () => _stateMachine.Update();
 

@@ -2,7 +2,7 @@ namespace BAStudio.StatePattern.Example.Game
 {
     public partial class Game
     {
-        public struct LoadGameRequest : IStateEvent<Game>, IStateParameter<Game>
+        public struct LoadGameRequest
         {
             public int Slot { get; set; }
 
