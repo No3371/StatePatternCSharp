@@ -1,4 +1,7 @@
 # StatePatternC#
+
+(👷 ATM this repo contains a `EnumExtension` class which is only for Unity, but can easily changed for .NET by **replacing all `UnsafeUtility.SizeOf` with `Unsafe.SizeOf`**.)
+
 Another state pattern framework carefully crafted for writing better code.
 The concept is pulling out the actual worker logic from a class and split the code into different States, transform the original object into a data storage / handle.
 
