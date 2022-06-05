@@ -19,6 +19,174 @@ Note: this implements a Passive StateMachine, it does nothing on its own and nee
 - interface **IComponentUser<T>**: States implement this supports Dependency Injection.
 - interface **IEventReceiverState<T, E>**: States implement this can receiver events of type E from StateMachine.
 
+Let's see some examples before learning anything about the framework, it may be confusing but the code should be clear enough to be understandable.
+
+## Quick Demo: Double Jumping
+
+Here is a simple example shows how to easily create a double-jump behavior with only 3 states: `Jumping`, `Falling`, `Grounded`.
+
+Jump button can be pressed anytime but it will only jumps when it's grounded or it jumped only once. More jumps can also be implmented by adding a int of how many times it jumped before landed again.
+
+The jumping logic is integrated in the `Jumping` state, whenever it enters the state, a Jump is performed (if allowed).
+
+ With this setup, the main Movement class is very clean and contains almost only its data.
+
+```csharp
+// Jumping indicates the character is jumping up & y position is increasing, actual jumping is executed in OnEntered()
+// If any ground found below the character, goes go Grounded
+// If no double-jumping is performed and jump button is pressed, goes to Jumping again
+// If it reached the highest point and started falling down due to gravity, goes to Falling
+public class Jumping : StateMachine<Movement>.State
+{
+    bool isDoubleJumping;
+    public override void OnEntered(StateMachine<Movement> machine, StateMachine<Movement>.State previous, Movement context, object parameter = null)
+    {
+        isDoubleJumping = previous is Jumping;
+        switch (parameter)
+        {
+            case JumpParameter jp: // Allow variable jump height, ex: hold to jump higher
+            {
+                context.Velocity += new Vector3(0, 1000, 0) * jp.JumpMultiplier;
+                break;
+            }
+            case null:
+            {
+                context.Velocity += new Vector3(0, 1000, 0);
+                break;
+            }
+        }
+    }
+    ...
+    public override void Update(StateMachine<Movement> machine, Movement context)
+    {
+        context.ApplyGravity();
+
+        if (context.GroundCheck())
+        {
+            machine.ChangeState<Grounded>();
+            return;
+        }
+
+        if (!isDoubleJumping && context.CurrentInput.Jump)
+        {
+            machine.ChangeState<Jumping>(); // Jump again
+            return;
+        }
+
+        if (context.Velocity.y < 0)
+        {
+            machine.ChangeState<Falling>();
+            return;
+        }
+    }
+}
+
+// Grounded indicates the character is steadily grounded now
+// If somehow the ground below disappear, start falling
+// And if jump button pressed, start jumping
+public class Grounded : StateMachine<Movement>.State
+{
+    public override void OnEntered(StateMachine<Movement> machine, StateMachine<Movement>.State previous, Movement context, object parameter = null)
+    {
+        context.Velocity.SetY(0);
+    }
+    ...
+    public override void Update(StateMachine<Movement> machine, Movement context)
+    {
+        context.GroundCheck();
+        if (context.Velocity.y < 0)
+        {
+            machine.ChangeState<Falling>();
+            return;
+        }
+        if (context.CurrentInput.Jump)
+        {
+            machine.ChangeState<Jumping>();
+            return;
+        }
+    }
+}
+
+// Falling indicates the character is falling down & y position is decreasing
+// If there's a ground below the character, goes to Grounded
+// Or goes to Jumping again if jump button pressed and no double-jump is performed
+public class Falling : StateMachine<Movement>.State
+{
+    bool isDoubleJumped;
+    public override void OnEntered(StateMachine<Movement> machine, StateMachine<Movement>.State previous, Movement context, object parameter = null)
+    {
+        isDoubleJumped = previous is Jumping && parameter is bool b == true;
+    }
+    ...
+    public override void Update(StateMachine<Movement> machine, Movement context)
+    {
+        context.ApplyGravity();
+
+        if (context.GroundCheck())
+        {
+            machine.ChangeState<Grounded>();
+            return;
+        }
+
+        if (!isDoubleJumped && context.CurrentInput.Jump)
+        {
+            machine.ChangeState<Jumping>(); // Jump again
+            return;
+        }
+    }
+}
+```
+
+## Quick Demo: UI Menu Interaction
+
+This exmaple shows how external code can communicate with states through events.
+
+```csharp
+public enum MainMenuButton
+{
+    NewGame,
+    Continue,
+    Options
+}
+
+public class MainMenu : StateMachine<GameCore>.State, IEventReceiverState<GameCore, MainMenuButton>
+{
+    ...
+    public void ReceiveEvent(StateMachine<GameCore> machine, GameCore context, MainMenuButton ev)
+    {
+        switch (ev)
+        {
+            case MainMenuButton.NewGame:
+                break;
+            case MainMenuButton.Continue:
+                break;
+            case MainMenuButton.Options:
+                break;
+        }
+    }
+}
+
+
+public class MainMenuController : MonoBehaviour
+{
+    GameCore gameCore;
+    public void OnButton_NewGame () // Called by UI
+    {
+        gameCore.StateMachine.SendEvent(GameCore.MainMenuButton.NewGame);
+    }
+
+    public void OnButton_Continue () // Called by UI
+    {
+        gameCore.StateMachine.SendEvent(GameCore.MainMenuButton.Continue);
+    }
+    public void OnButton_Options () // Called by UI
+    {
+        gameCore.StateMachine.SendEvent(GameCore.MainMenuButton.Options);
+    }
+}
+
+```
+
 ## Getting Started
 
 ### Create a subject
@@ -37,7 +205,7 @@ public partial class Game
     }
 
     /// <summary>
-    /// Assuming this get called 60 times/s
+    /// Assuming this get called 60 times/s.
     /// </summary>
     public void Update () => _stateMachine.Update();
 
@@ -91,21 +259,22 @@ A state is a child class of StateMachine<T>.State, there are 3 methods that must
 
 - `OnEntered` is executed whenever the StateMachine switched the active state to it.
 - `Update` is executed whenever the StateMachine's Update() get successfully called.
+    - It's not guaranteed that this will get called between `OnEntered()` and `OnLeaving()`, because these 2 methods can `ChangeState()` too.
 - `OnLeaving` is executed whenever the StateMachine switched away from it to another state.
 
 The method signatures are long and complex, this is how it is after several attempts to refactor across several years. As long as you utilize your IDE and do not hand-typing everything it should not be a problem.
 
-For `Init` state, we do everything required to initialize the game, Assuming the sync `SetupStuff()` and an async `SetupAsyncStuff()` are all we need, we keep the state updated and `ChangeState<InMainMenu>` when we know that we are good to go.
+In `Init` state, we do everything required to initialize the game, Assuming the sync `SetupStuff()` and an async `SetupAsyncStuff()` are all we need, we keep the state updated and `ChangeState<InMainMenu>` when we know that we are good to go.
 
-In the `ChangeState<InMainMenu>` call, the machine will call `Init.OnLeaving` then `InMainMenu.OnEntered`.
+Inside the `ChangeState<InMainMenu>` statement, the machine will call `Init.OnLeaving` then `InMainMenu.OnEntered`.
 
-Noted that there's no return for these methods. For `Update()`, this means we can have statements after a `ChangeState()` call, but always returning after `ChangeState()` call should make it easier to maintain.
+Noted that although we can have statements after a `ChangeState()` call, always returning after `ChangeState()` calls should ease the maintainence.
 
-That's all. Well, at least for basic usage of the framework, you are good to go. Keep reading if you are interested in all features and some practical examples.
+That's all...Well, at least for basic usage of the framework, you are good to go. Keep reading if you are interested in all features.
 
 ### Parameters
 
-Both `ChangeState()` implementations take an optional `object parameter`, which will be passed along to both the from/to states. This allows states to know more about a transition.
+Both `ChangeState()` implementations take an optional `object parameter`, which will be passed along to both the from/to states, this allows them to know more about the transition.
 
 The parameter is of type `object`, this means anything can be passed. For example, pass an Exception to a Game.Exiting state, we can add some code to upload the error stack trace to remote servers.
 
@@ -208,7 +377,7 @@ This happens when:
 - For `ChangeState(State)`, Components Delivering always happens every time.
 - For `ChangeState<S>()`, there's a configuration flag that will decide the behavior.
     - (Noted that this generic version use internally newed/cached states)
-    - If `InjectionOnCachedStateOnlyNew` is set to true, For every S, Components Delivering happens only at the first time `ChangeState<S>()` is called. Otherwise, it also happens every time `ChangeState<S>()` is called.
+    - If `OnlyInjectsNewForCachedStates` is set to true, For every S, Components Delivering happens only at the first time `ChangeState<S>()` is called. Otherwise, it also happens every time `ChangeState<S>()` is called.
 
 What exactly does Components Delivering do?
 
@@ -239,7 +408,7 @@ To log state transitions, subscribe to the string delegate `StateMachine<T>.Debu
 ## FAQ
 - The abstract methods in States are so annoying! How would I type all those for every state?
 
-    This is actually the simplest yet most usable interface I figured. I personally use IDE (VSCode + Omnisharp) to populate stuff in less than a second so it's not a deal IMO.
+    This is actually the simplest yet most usable interface I figured. I personally use IDE (VSCode + Omnisharp, QuickFix - AutoImplmenting) to one-click populate stuff so it's solvable problem in my opinion.
 
 - Why States are sub-classes of StateMachines?
 
@@ -251,106 +420,5 @@ To log state transitions, subscribe to the string delegate `StateMachine<T>.Debu
 
 - Is `StateMachine` thread-safe?
 
-    It's not. At the moment I believe the best multi-threaded usage will be like every StateMachine only gets updated by 1 thread (One thread to many machines). 
+    Not for now. At the moment I believe the best multi-threaded usage will be like every StateMachine only gets updated by 1 thread (One thread to many machines).
 
-## Examples
-
-### Double Jumping
-
-This example shows how to easily create a double-jump behavior with only 3 states.
-
-```csharp
-public class Jumping : StateMachine<Movement>.State
-{
-    bool isDoubleJumping;
-    public override void OnEntered(StateMachine<Movement> machine, StateMachine<Movement>.State previous, Movement context, object parameter = null)
-    {
-        isDoubleJumping = previous is Jumping;
-        switch (parameter)
-        {
-            case JumpParameter jp:
-            {
-                context.Velocity += new Vector3(0, 1000, 0) * jp.JumpMultiplier;
-                break;
-            }
-            case null:
-            {
-                context.Velocity += new Vector3(0, 1000, 0);
-                break;
-            }
-        }
-    }
-    ...
-    public override void Update(StateMachine<Movement> machine, Movement context)
-    {
-        context.ApplyGravity();
-
-        if (context.GroundCheck())
-        {
-            machine.ChangeState<Grounded>();
-            return;
-        }
-
-        if (context.CurrentInput.Jump)
-        {
-            machine.ChangeState<Jumping>(); // Jump again
-            return;
-        }
-
-        if (context.Velocity.y < 0)
-        {
-            machine.ChangeState<Falling>();
-            return;
-        }
-    }
-}
-
-public class Grounded : StateMachine<Movement>.State
-{
-    public override void OnEntered(StateMachine<Movement> machine, StateMachine<Movement>.State previous, Movement context, object parameter = null)
-    {
-        context.Velocity.SetY(0);
-    }
-    ...
-    public override void Update(StateMachine<Movement> machine, Movement context)
-    {
-        context.GroundCheck();
-        if (context.Velocity.y < 0)
-        {
-            machine.ChangeState<Falling>();
-            return;
-        }
-        if (context.CurrentInput.Jump)
-        {
-            machine.ChangeState<Jumping>();
-            return;
-        }
-    }
-}
-
-public class Falling : StateMachine<Movement>.State
-{
-    bool isDoubleJumped;
-    public override void OnEntered(StateMachine<Movement> machine, StateMachine<Movement>.State previous, Movement context, object parameter = null)
-    {
-        isDoubleJumped = previous is Jumping && parameter is bool b == true;
-    }
-    ...
-    public override void Update(StateMachine<Movement> machine, Movement context)
-    {
-        context.ApplyGravity();
-
-        if (context.GroundCheck())
-        {
-            machine.ChangeState<Grounded>();
-            return;
-        }
-
-        if (!isDoubleJumped && context.CurrentInput.Jump)
-        {
-            machine.ChangeState<Jumping>(); // Jump again
-            return;
-        }
-    }
-}
-```
