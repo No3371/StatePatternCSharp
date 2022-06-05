@@ -13,7 +13,6 @@ namespace BAStudio.StatePattern
     {
         static StringBuilder DebugStringBuilder { get; set; }
         protected System.Action<string> debugOutput;
-
         public event System.Action<string> DebugOutput { add => debugOutput += value; remove => debugOutput -= value; }
         public StateMachine(T target)
         {
@@ -44,7 +43,7 @@ namespace BAStudio.StatePattern
         /// <para> If for every S, you set all the component S needs before the first time you call `ChangeState<S>`, 
         /// enable this to skip injection(Reflection) everytime `ChangeState<S>` is called. (not for ChangeState(State)).</para>
         /// </summary>
-        public bool InjectionOnCachedStateOnlyNew { get; set; } = false;
+        public bool OnlyInjectsNewForCachedStates { get; set; } = false;
         public event Action<State, State> OnStateChanging;
         public event Action<State, State> OnStateChanged;
         protected Dictionary<Type, State> AutoStateCache { get; set; }
@@ -60,6 +59,10 @@ namespace BAStudio.StatePattern
 			SendEvent(new NewPopupStateEvent(s));
             PopupStateStarted?.Invoke(s);
         }
+
+        public bool IsUpdating { get; protected set; }
+        public bool IsChangingState { get => stateChangingDepth > 0; }
+        int stateChangingDepth;
 
         /// <summary>
         /// The new PopupState is returned so you can do something to it like Update() once immediately.
@@ -80,11 +83,17 @@ namespace BAStudio.StatePattern
             PopupStateEnded?.Invoke(s);
 			SendEvent(new PopupStateEndedEvent(s));
         }
+        public IReadOnlyCollection<IPopupState> ViewPopupStates ()
+        {
+            return PopupStates.AsReadOnly();
+        }
+
         public void SetComponent<PT, CT>(CT obj) where CT : PT
         {
             if (Components == null) Components = new Dictionary<Type, object>();
             Components[typeof(PT)] = obj;
         }
+
 
         /// <summary>
         /// <para>Change the state to the provide instance, with parameter supplied.</para>
@@ -93,8 +102,8 @@ namespace BAStudio.StatePattern
         /// </summary>
         public virtual void ChangeState(State state, object parameter = null)
         {
-            var prev = CurrentState;
             PreStateChange(CurrentState, state, parameter);
+            var prev = CurrentState;
             CurrentState = state;
             DeliverComponents(state); // Though maybe not useful, calling this here give prev a chance to provide components
             state.OnEntered(this, prev, Target, parameter);
@@ -112,14 +121,14 @@ namespace BAStudio.StatePattern
             {
                 S newS = new S();
                 AutoStateCache.Add(typeof(S), newS);
-                if (InjectionOnCachedStateOnlyNew) DeliverComponents(newS);
+                if (OnlyInjectsNewForCachedStates) DeliverComponents(newS);
             }
 
             var prev = CurrentState;
             var state = AutoStateCache[typeof(S)];
             PreStateChange(CurrentState, state, parameter);
             CurrentState = state;
-            if (!InjectionOnCachedStateOnlyNew) DeliverComponents(state); // Though maybe not useful, calling this here give prev a chance to provide components
+            if (!OnlyInjectsNewForCachedStates) DeliverComponents(state); // Though maybe not useful, calling this here give prev a chance to provide components
             state.OnEntered(this, prev, Target, parameter);
             PostStateChange(prev);
         }
@@ -171,6 +180,9 @@ namespace BAStudio.StatePattern
         protected virtual void PreStateChange(State fromState, State toState, object parameter = null)
         {
             if (debugOutput != null) LogFormat("A StateMachine<{0}> is switching from {1} to {2}.", Target.GetType().Name, fromState?.GetType()?.Name, toState.GetType().Name);
+
+            stateChangingDepth++;
+
             fromState?.OnLeaving(this, toState, Target, parameter);
             OnStateChanging?.Invoke(fromState, toState);
         }
@@ -181,15 +193,38 @@ namespace BAStudio.StatePattern
             if (debugOutput != null) LogFormat("A StateMachine<{0}> has switched from {1} to {2}.", Target.GetType().Name, fromState?.GetType()?.Name, CurrentState.GetType().Name);
 			SendEvent(new MainStateChangedEvent(fromState, CurrentState));
             OnStateChanged?.Invoke(fromState, CurrentState);
+
+            stateChangingDepth--;
+        }
+
+        /// <summary>
+        /// Cache the provided state instance.
+        /// This is useful when a state is configured with constructor and it's needed to be swapped on the fly.
+        /// </summary>
+        /// <param name="state"></param>
+        /// <typeparam name="S"></typeparam>
+        public void Cache<S> (S state) where S : State
+        {
+            if (OnlyInjectsNewForCachedStates) DeliverComponents(state);
+            AutoStateCache[typeof(S)] = state;
         }
 
         public virtual void Update()
         {
+            SelfDiagnosticOnUpdate();
+
             if (UpdatePaused) return;
             if (Target == null) throw new System.NullReferenceException("Target is null.");
 
+            IsUpdating = true;
             UpdateMainState();
             UpdatePopStates();
+            IsUpdating = false;
+        }
+
+        void SelfDiagnosticOnUpdate ()
+        {
+            if (stateChangingDepth > 0) throw new Exception("State change is not properly finished. Is there an exception?");
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
