@@ -25,11 +25,13 @@ Let's see some examples before learning anything about the framework, it may be 
 
 Here is a simple example shows how to easily create a double-jump behavior with only 3 states: `Jumping`, `Falling`, `Grounded`.
 
-Jump button can be pressed anytime but it will only jumps when it's grounded or it jumped only once. More jumps can also be implmented by adding a int of how many times it jumped before landed again.
+Jump button can be pressed anytime but it will only jumps when it's grounded or it jumped only once.
 
-The jumping logic is integrated in the `Jumping` state, whenever it enters the state, a Jump is performed (if allowed).
+Triple or more jumps can also be implmented too by adding an int variable for how many times it jumps between 2 Grounded.
 
- With this setup, the main Movement class is very clean and contains almost only its data.
+The jumping logic is built into the `Jumping` state, whenever it enters the state, a Jump is performed (if allowed).
+
+With this setup, the main Movement class is very clean and contains no jumping behavior code.
 
 ```csharp
 // Jumping indicates the character is jumping up & y position is increasing, actual jumping is executed in OnEntered()
@@ -209,22 +211,24 @@ public partial class Game
     /// </summary>
     public void Update () => _stateMachine.Update();
 
-    // These methods are for later examples
+    // These methods are for examples below
     public void SetupStuff () {}
     public async Task SetupAsyncStuff () {}
     public void ExitGame () {}
 }
 ```
 
-The framework does not require your subject T to inherit something. Instead, just new a `StateMachine<T>` somewhere then you are good. Declare the StateMachine within your subject T is recommended. Not much change to existed subject class is needed to use this framework, even if it's not a fresh new class, we can attach a StateMachine to it to start applying state pattern.
+The framework does not require your subject T to inherit something. Instead, just new a `StateMachine<T>` somewhere then you are good (declaring it within your subject T is recommended).
+
+For existed subject classes, not much change to existed code is required, the StateMachine and States only requires a reference to the subject to be functional.
 
 There are several interesting points in the above codes:
-- It's `partial`, this is because the state classes are declared as `Game`'s subclasses and split into different files.
-    - This is recommended that the states can access private members of the subject.
-- There's a `SetComponent` statement. This is the Dependency Injection feature; we will talk about this later.
+- It's `partial`, this is because the state classes are declared as `Game`'s subclasses and splitted into different files.
+    - This is recommended so the states can access private members of the subject.
+- There's a `SetComponent()` statement. This is the Dependency Injection feature; we will talk about this later.
 - We `ChangeState` immediately after the machine is newed.
-    - There are 2 versions of `ChangeState`: generic/instanced.
-    - In the example code generic version is used, and the Init is automatically newed and cached by the machine.
+    - `ChangeState()` can be called with generic parameter or a state instance.
+    - In the example code the generic implementation is called. This results in a Init automatically newed and cached by the machine.
 
 ### Create a state
 Now let's take a look at `Init` state:
