@@ -27,7 +27,7 @@ Here is a simple example shows how to easily create a double-jump behavior with 
 
 Jump button can be pressed anytime but it will only jumps when it's grounded or it jumped only once.
 
-Triple or more jumps can also be implmented too by adding an int variable for how many times it jumps between 2 Grounded.
+Triple or more jumps can also be implmented by keeping an int variable for how many times it jumps between 2 Grounded.
 
 The jumping logic is built into the `Jumping` state, whenever it enters the state, a Jump is performed (if allowed).
 
