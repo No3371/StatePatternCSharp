@@ -20,6 +20,11 @@ namespace BAStudio.StatePattern
             public override void OnEntered(StateMachine<T> machine, State previous, T context, object parameter = null)
             {
                 if (typeof(FROM) != previous.GetType()) throw new InvalidOperationException("Transition source state mismatch");
+
+                // Reset
+                isCompleted = false;
+                exception = null;
+                progress = default(H);
             }
 
             public override void OnLeaving(StateMachine<T> machine, State next, T context, object parameter = null)
