@@ -9,7 +9,7 @@ namespace BAStudio.StatePattern.Example.Game
         {
             [AutoComponent] ILogger Logger { get; }
             Task _loadGameTask;
-            public override void OnEntered(StateMachine<Game> machine, StateMachine<Game>.State previous, Game context, object parameter = null)
+            public override void OnEntered(StateMachine<Game> machine, StateMachine<Game>.State previous, Game subject, object parameter = null)
             {
                 if (parameter is LoadGameRequest r)
                     _loadGameTask = LoadGameTask(r.Slot);
@@ -17,9 +17,9 @@ namespace BAStudio.StatePattern.Example.Game
                     throw new System.ArgumentException("Expecting parameter of type LoadGameRequest but got a " + parameter.GetType());
             }
 
-            public override void OnLeaving(StateMachine<Game> machine, StateMachine<Game>.State next, Game context, object parameter = null) {}
+            public override void OnLeaving(StateMachine<Game> machine, StateMachine<Game>.State next, Game subject, object parameter = null) {}
 
-            public override void Update(StateMachine<Game> machine, Game context)
+            public override void Update(StateMachine<Game> machine, Game subject)
             {
                 if (_loadGameTask.IsCompleted) machine.ChangeState<GamePlaying>();
             }

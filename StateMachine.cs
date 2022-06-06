@@ -14,12 +14,12 @@ namespace BAStudio.StatePattern
         static StringBuilder DebugStringBuilder { get; set; }
         protected System.Action<string> debugOutput;
         public event System.Action<string> DebugOutput { add => debugOutput += value; remove => debugOutput -= value; }
-        public StateMachine(T target)
+        public StateMachine(T subject)
         {
-            Target = target;
+            Subject = subject;
             UpdatePaused = false;
         }
-        public T Target { get; }
+        public T Subject { get; }
         public State CurrentState { get; protected set; }
 
         private bool updatePaused;
@@ -55,7 +55,7 @@ namespace BAStudio.StatePattern
         public void Popup(IPopupState s, object parameter = null)
         {
             PopupStates.Add(s);
-            s.OnStarting(this, Target, parameter);
+            s.OnStarting(this, Subject, parameter);
 			SendEvent(new NewPopupStateEvent(s));
             PopupStateStarted?.Invoke(s);
         }
@@ -71,14 +71,14 @@ namespace BAStudio.StatePattern
         {
             S s = new S();
             PopupStates.Add(s);
-            s.OnStarting(this, Target, parameter);
+            s.OnStarting(this, Subject, parameter);
 			SendEvent(new NewPopupStateEvent(s));
             PopupStateStarted?.Invoke(s);
             return s;
         }
         public void EndPopupState(IPopupState s, object parameter = null)
         {
-            s.OnEnding(this, Target, parameter);
+            s.OnEnding(this, Subject, parameter);
             PopupStates.Remove(s);
             PopupStateEnded?.Invoke(s);
 			SendEvent(new PopupStateEndedEvent(s));
@@ -106,7 +106,7 @@ namespace BAStudio.StatePattern
             var prev = CurrentState;
             CurrentState = state;
             DeliverComponents(state); // Though maybe not useful, calling this here give prev a chance to provide components
-            state.OnEntered(this, prev, Target, parameter);
+            state.OnEntered(this, prev, Subject, parameter);
             PostStateChange(prev);
         }
 
@@ -129,7 +129,7 @@ namespace BAStudio.StatePattern
             PreStateChange(CurrentState, state, parameter);
             CurrentState = state;
             if (!OnlyInjectsNewForCachedStates) DeliverComponents(state); // Though maybe not useful, calling this here give prev a chance to provide components
-            state.OnEntered(this, prev, Target, parameter);
+            state.OnEntered(this, prev, Subject, parameter);
             PostStateChange(prev);
         }
 
@@ -179,18 +179,18 @@ namespace BAStudio.StatePattern
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         protected virtual void PreStateChange(State fromState, State toState, object parameter = null)
         {
-            if (debugOutput != null) LogFormat("A StateMachine<{0}> is switching from {1} to {2}.", Target.GetType().Name, fromState?.GetType()?.Name, toState.GetType().Name);
+            if (debugOutput != null) LogFormat("A StateMachine<{0}> is switching from {1} to {2}.", Subject.GetType().Name, fromState?.GetType()?.Name, toState.GetType().Name);
 
             stateChangingDepth++;
 
-            fromState?.OnLeaving(this, toState, Target, parameter);
+            fromState?.OnLeaving(this, toState, Subject, parameter);
             OnStateChanging?.Invoke(fromState, toState);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         protected virtual void PostStateChange(State fromState)
         {
-            if (debugOutput != null) LogFormat("A StateMachine<{0}> has switched from {1} to {2}.", Target.GetType().Name, fromState?.GetType()?.Name, CurrentState.GetType().Name);
+            if (debugOutput != null) LogFormat("A StateMachine<{0}> has switched from {1} to {2}.", Subject.GetType().Name, fromState?.GetType()?.Name, CurrentState.GetType().Name);
 			SendEvent(new MainStateChangedEvent(fromState, CurrentState));
             OnStateChanged?.Invoke(fromState, CurrentState);
 
@@ -214,7 +214,7 @@ namespace BAStudio.StatePattern
             SelfDiagnosticOnUpdate();
 
             if (UpdatePaused) return;
-            if (Target == null) throw new System.NullReferenceException("Target is null.");
+            if (Subject == null) throw new System.NullReferenceException("Target is null.");
 
             IsUpdating = true;
             UpdateMainState();
@@ -233,7 +233,7 @@ namespace BAStudio.StatePattern
             if (CurrentState is not NoOpState)
             {
                 if (CurrentState == null) throw new System.NullReferenceException("CurrentState is null. Did you set a state after instantiate this controller?");
-                else CurrentState.Update(this, Target);
+                else CurrentState.Update(this, Subject);
             }
         }
 
@@ -241,12 +241,12 @@ namespace BAStudio.StatePattern
         protected void UpdatePopStates()
         {
             if (PopupStates != null)
-                foreach (var ps in PopupStates) ps.Update(this, Target);
+                foreach (var ps in PopupStates) ps.Update(this, Subject);
         }
 
         public virtual bool SendEvent<E>(E ev)
         {
-            if (debugOutput != null && CurrentState != null) LogFormat("A StateMachine<{0}> is invoking {1}, the active state (receiver) is {2}", Target.GetType().Name, CurrentState?.GetType()?.Name, ev.GetType().Name);
+            if (debugOutput != null && CurrentState != null) LogFormat("A StateMachine<{0}> is invoking {1}, the active state (receiver) is {2}", Subject.GetType().Name, CurrentState?.GetType()?.Name, ev.GetType().Name);
 
             SendEventToCurrentState(ev);
             SendEventToPopupStates(ev);
@@ -258,7 +258,7 @@ namespace BAStudio.StatePattern
         protected void SendEventToCurrentState<E>(E ev)
         {
             if (CurrentState is IEventReceiverState<T, E> ers)
-                ers.ReceiveEvent(this, Target, ev);
+                ers.ReceiveEvent(this, Subject, ev);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -266,7 +266,7 @@ namespace BAStudio.StatePattern
         {
             if (PopupStates != null)
                 foreach (var ps in PopupStates)
-                    if (ps is IEventReceiverState<T, E> ers) ers.ReceiveEvent(this, Target, ev);
+                    if (ps is IEventReceiverState<T, E> ers) ers.ReceiveEvent(this, Subject, ev);
         }
 
         protected virtual void Log(string content)

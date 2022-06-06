@@ -7,7 +7,7 @@ namespace BAStudio.StatePattern.Example.Game
         public class NewGame : StateMachine<Game>.State
         {
             Task _newGameTask;
-            public override void OnEntered(StateMachine<Game> machine, StateMachine<Game>.State previous, Game context, object parameter = null)
+            public override void OnEntered(StateMachine<Game> machine, StateMachine<Game>.State previous, Game subject, object parameter = null)
             {
                 _newGameTask = NewGameTask();
                 switch (parameter)
@@ -20,11 +20,11 @@ namespace BAStudio.StatePattern.Example.Game
                 }
             }
 
-            public override void OnLeaving(StateMachine<Game> machine, StateMachine<Game>.State next, Game context, object parameter = null)
+            public override void OnLeaving(StateMachine<Game> machine, StateMachine<Game>.State next, Game subject, object parameter = null)
             {
             }
 
-            public override void Update(StateMachine<Game> machine, Game context)
+            public override void Update(StateMachine<Game> machine, Game subject)
             {
                 if (_newGameTask.IsCompleted) machine.ChangeState<GamePlaying>();
             }

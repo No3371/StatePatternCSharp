@@ -9,9 +9,9 @@ namespace BAStudio.StatePattern
         /// </summary>
         public interface IPopupState
         {
-            void OnStarting(StateMachine<T> machine, T context, object parameter = null);
-            void OnEnding(StateMachine<T> machine, T context, object parameter = null);
-            void Update(StateMachine<T> machine, T context);
+            void OnStarting(StateMachine<T> machine, T subject, object parameter = null);
+            void OnEnding(StateMachine<T> machine, T subject, object parameter = null);
+            void Update(StateMachine<T> machine, T subject);
         }
     }
 }

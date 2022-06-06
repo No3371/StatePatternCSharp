@@ -17,7 +17,7 @@ namespace BAStudio.StatePattern
                 this.parameter = parameter;
             }
 
-            public override void OnEntered(StateMachine<T> machine, State previous, T context, object parameter = null)
+            public override void OnEntered(StateMachine<T> machine, State previous, T subject, object parameter = null)
             {
                 if (typeof(FROM) != previous.GetType()) throw new InvalidOperationException("Transition source state mismatch");
 
@@ -27,12 +27,12 @@ namespace BAStudio.StatePattern
                 progress = default(H);
             }
 
-            public override void OnLeaving(StateMachine<T> machine, State next, T context, object parameter = null)
+            public override void OnLeaving(StateMachine<T> machine, State next, T subject, object parameter = null)
             {
                 handle.Dispose();
             }
 
-            public override void Update(StateMachine<T> machine, T context)
+            public override void Update(StateMachine<T> machine, T subject)
             {
                 if (isCompleted)
                 {

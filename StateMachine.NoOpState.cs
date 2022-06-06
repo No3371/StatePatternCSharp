@@ -4,9 +4,9 @@ namespace BAStudio.StatePattern
     {
         public sealed class NoOpState : State
 		{
-			public override void OnEntered(StateMachine<T> machine, State previous, T context, object parameter = null) {}
-			public override void Update(StateMachine<T> machine, T context) {}
-			public override void OnLeaving(StateMachine<T> machine, State next, T context, object parameter = null) {}
+			public override void OnEntered(StateMachine<T> machine, State previous, T subject, object parameter = null) {}
+			public override void Update(StateMachine<T> machine, T subject) {}
+			public override void OnLeaving(StateMachine<T> machine, State next, T subject, object parameter = null) {}
 		}
     }
 }

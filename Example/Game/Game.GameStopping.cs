@@ -8,7 +8,7 @@ namespace BAStudio.StatePattern.Example.Game
         {
             bool _backToMainMenu;
             Task _stopGameTask;
-            public override void OnEntered(StateMachine<Game> machine, StateMachine<Game>.State previous, Game context, object parameter = null)
+            public override void OnEntered(StateMachine<Game> machine, StateMachine<Game>.State previous, Game subject, object parameter = null)
             {
                 _backToMainMenu = false;
                 if (parameter is ExitGameRequest request)
@@ -23,9 +23,9 @@ namespace BAStudio.StatePattern.Example.Game
                 _stopGameTask = StopGame();
             }
 
-            public override void OnLeaving(StateMachine<Game> machine, StateMachine<Game>.State next, Game context, object parameter = null) {}
+            public override void OnLeaving(StateMachine<Game> machine, StateMachine<Game>.State next, Game subject, object parameter = null) {}
 
-            public override void Update(StateMachine<Game> machine, Game context)
+            public override void Update(StateMachine<Game> machine, Game subject)
             {
                 if (_stopGameTask.IsCompleted)
                 {
@@ -35,7 +35,7 @@ namespace BAStudio.StatePattern.Example.Game
                     }
                     else
                     {
-                        context.ExitGame();
+                        subject.ExitGame();
                     }
                 }
             }

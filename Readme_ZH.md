@@ -70,15 +70,15 @@ public partial class Game
     public class Init : StateMachine<Game>.State
     {
         Task _setupTask; // Just for example 
-        public override void OnEntered(StateMachine<Game> machine, StateMachine<Game>.State previous, Game context, object parameter = null)
+        public override void OnEntered(StateMachine<Game> machine, StateMachine<Game>.State previous, Game subject, object parameter = null)
         {
-            context.SetupStuff();
-            _setupTask = context.SetupAsyncStuff();
+            subject.SetupStuff();
+            _setupTask = subject.SetupAsyncStuff();
         }
 
-        public override void OnLeaving(StateMachine<Game> machine, StateMachine<Game>.State next, Game context, object parameter = null) {}
+        public override void OnLeaving(StateMachine<Game> machine, StateMachine<Game>.State next, Game subject, object parameter = null) {}
 
-        public override void Update(StateMachine<Game> machine, Game context)
+        public override void Update(StateMachine<Game> machine, Game subject)
         {
             if (_setupTask.IsCompleted)
             {
@@ -117,7 +117,7 @@ public partial class Game
 ```csharp
 public class NewGame : StateMachine<Game>.State
 {
-    public override void OnEntered(StateMachine<Game> machine, StateMachine<Game>.State previous, Game context, object parameter = null)
+    public override void OnEntered(StateMachine<Game> machine, StateMachine<Game>.State previous, Game subject, object parameter = null)
     {
         switch (parameter)
         {
@@ -161,12 +161,12 @@ public class InMainMenu : StateMachine<Game>.State,
                           IEventReceiverState<Game, InMainMenu.Interaction>
 {
     ...
-    public void ReceiveEvent(StateMachine<Game> machine, Game context, LoadGameRequest ev)
+    public void ReceiveEvent(StateMachine<Game> machine, Game subject, LoadGameRequest ev)
     {
         machine.ChangeState<LoadGame>(ev);
     }
 
-    public void ReceiveEvent(StateMachine<Game> machine, Game context, InMainMenu.Interaction ev)
+    public void ReceiveEvent(StateMachine<Game> machine, Game subject, InMainMenu.Interaction ev)
     {
         switch (ev)
         {
@@ -177,7 +177,7 @@ public class InMainMenu : StateMachine<Game>.State,
                 // LOAD GAME LOGIC
                 break;
             case Interaction.Exit:
-                context.ExitGame();
+                subject.ExitGame();
                 break;
         }
     }
@@ -211,7 +211,7 @@ This happens when:
 - For `ChangeState(State)`, Components Delivering always happens every time.
 - For `ChangeState<S>()`, there's a configuration flag that will decide the behavior.
     - (Noted that this generic version use internally newed/cached states)
-    - If `InjectionOnCachedStateOnlyNew` is set to true, For every S, Components Delivering happens only at the first time `ChangeState<S>()` is called. Otherwise, it also happens every time `ChangeState<S>()` is called.
+    - If `OnlyInjectsNewForCachedStates` is set to true, For every S, Components Delivering happens only at the first time `ChangeState<S>()` is called. Otherwise, it also happens every time `ChangeState<S>()` is called.
 
 What exactly does Components Delivering do?
 
@@ -266,41 +266,41 @@ This example shows how to easily create a double-jump behavior with only 3 state
 public class Jumping : StateMachine<Movement>.State
 {
     bool isDoubleJumping;
-    public override void OnEntered(StateMachine<Movement> machine, StateMachine<Movement>.State previous, Movement context, object parameter = null)
+    public override void OnEntered(StateMachine<Movement> machine, StateMachine<Movement>.State previous, Movement subject, object parameter = null)
     {
         isDoubleJumping = previous is Jumping;
         switch (parameter)
         {
             case JumpParameter jp:
             {
-                context.Velocity += new Vector3(0, 1000, 0) * jp.JumpMultiplier;
+                subject.Velocity += new Vector3(0, 1000, 0) * jp.JumpMultiplier;
                 break;
             }
             case null:
             {
-                context.Velocity += new Vector3(0, 1000, 0);
+                subject.Velocity += new Vector3(0, 1000, 0);
                 break;
             }
         }
     }
     ...
-    public override void Update(StateMachine<Movement> machine, Movement context)
+    public override void Update(StateMachine<Movement> machine, Movement subject)
     {
-        context.ApplyGravity();
+        subject.ApplyGravity();
 
-        if (context.GroundCheck())
+        if (subject.GroundCheck())
         {
             machine.ChangeState<Grounded>();
             return;
         }
 
-        if (context.CurrentInput.Jump)
+        if (subject.CurrentInput.Jump)
         {
             machine.ChangeState<Jumping>(); // Jump again
             return;
         }
 
-        if (context.Velocity.y < 0)
+        if (subject.Velocity.y < 0)
         {
             machine.ChangeState<Falling>();
             return;
@@ -310,20 +310,20 @@ public class Jumping : StateMachine<Movement>.State
 
 public class Grounded : StateMachine<Movement>.State
 {
-    public override void OnEntered(StateMachine<Movement> machine, StateMachine<Movement>.State previous, Movement context, object parameter = null)
+    public override void OnEntered(StateMachine<Movement> machine, StateMachine<Movement>.State previous, Movement subject, object parameter = null)
     {
-        context.Velocity.SetY(0);
+        subject.Velocity.SetY(0);
     }
     ...
-    public override void Update(StateMachine<Movement> machine, Movement context)
+    public override void Update(StateMachine<Movement> machine, Movement subject)
     {
-        context.GroundCheck();
-        if (context.Velocity.y < 0)
+        subject.GroundCheck();
+        if (subject.Velocity.y < 0)
         {
             machine.ChangeState<Falling>();
             return;
         }
-        if (context.CurrentInput.Jump)
+        if (subject.CurrentInput.Jump)
         {
             machine.ChangeState<Jumping>();
             return;
@@ -334,22 +334,22 @@ public class Grounded : StateMachine<Movement>.State
 public class Falling : StateMachine<Movement>.State
 {
     bool isDoubleJumped;
-    public override void OnEntered(StateMachine<Movement> machine, StateMachine<Movement>.State previous, Movement context, object parameter = null)
+    public override void OnEntered(StateMachine<Movement> machine, StateMachine<Movement>.State previous, Movement subject, object parameter = null)
     {
         isDoubleJumped = previous is Jumping && parameter is bool b == true;
     }
     ...
-    public override void Update(StateMachine<Movement> machine, Movement context)
+    public override void Update(StateMachine<Movement> machine, Movement subject)
     {
-        context.ApplyGravity();
+        subject.ApplyGravity();
 
-        if (context.GroundCheck())
+        if (subject.GroundCheck())
         {
             machine.ChangeState<Grounded>();
             return;
         }
 
-        if (!isDoubleJumped && context.CurrentInput.Jump)
+        if (!isDoubleJumped && subject.CurrentInput.Jump)
         {
             machine.ChangeState<Jumping>(); // Jump again
             return;

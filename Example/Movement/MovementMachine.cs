@@ -8,17 +8,17 @@ namespace BAStudio.StatePattern.Example
 
         public class ExampleState : State
         {
-            public override void OnEntered(StateMachine<Movement> machine, State previous, Movement context, object parameter = null)
+            public override void OnEntered(StateMachine<Movement> machine, State previous, Movement subject, object parameter = null)
             {
                 throw new NotImplementedException();
             }
 
-            public override void OnLeaving(StateMachine<Movement> machine, State next, Movement context, object parameter = null)
+            public override void OnLeaving(StateMachine<Movement> machine, State next, Movement subject, object parameter = null)
             {
                 throw new NotImplementedException();
             }
 
-            public override void Update(StateMachine<Movement> machine, Movement context)
+            public override void Update(StateMachine<Movement> machine, Movement subject)
             {
                 throw new NotImplementedException();
             }
