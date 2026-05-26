@@ -424,6 +424,7 @@ namespace BAStudio.StatePattern
 
             SendEventToCurrentState(ev);
             SendEventToPopupStates(ev);
+            SendEventToPeers(ev);
 
             return true;
         }
