@@ -429,6 +429,22 @@ namespace BAStudio.StatePattern
             return true;
         }
 
+        public virtual R? SendCommand<C, R>(C command, bool shouldThrow)
+        {
+            if (debugOutput != null && (DebugFlags & DebugFlag_Event) != 0 && CurrentState != null)
+                LogFormat("A StateMachine<{0}> is sending command {1} to {2}",
+                          Subject!.GetType().Name,
+                          command.GetType().Name,
+                          CurrentState?.GetType()?.Name);
+
+            if (CurrentState is ICommandReceiverState<T, C, R> crs)
+                return crs.Command(this, command);
+            else if (CurrentState is ICommandReceiverState<C, R> crs2)
+                return crs2.Command(command);
+            else if (shouldThrow) throw new Exception($"Command sender expected {typeof(ICommandReceiverState<C, R>)}, but current state is {CurrentState.GetType().Name}.");
+            else return default;
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         protected void SendEventToCurrentState<E>(E ev)
         {

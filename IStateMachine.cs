@@ -34,10 +34,9 @@ namespace BAStudio.StatePattern
 
         void ChangeState(IState<T> state, object parameter = null);
         void ChangeState<S>(object parameter = null) where S : IState<T>;
-
         bool SendEvent<E>(E ev);
         bool SendEvent<S, E>(E ev, bool shouldThrow) where S : IState<T>;
-
+        R? SendCommand<C, R>(C command, bool shouldThrow);
         void Popup(IPopupState<T> state, object parameter = null);
         S Popup<S>(object parameter = null) where S : IPopupState<T>, new();
         void EndPopupState(IPopupState<T> state, object parameter = null);
