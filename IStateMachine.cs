@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace BAStudio.StatePattern
 {
@@ -38,6 +39,7 @@ namespace BAStudio.StatePattern
         bool SendEvent<S, E>(E ev, bool shouldThrow) where S : IState<T>;
         R? SendCommand<C, R>(C command, bool shouldThrow);
         void Popup(IPopupState<T> state, object parameter = null);
+        Task PopupAsync(IPopupState<T> state, object parameter = null);
         S Popup<S>(object parameter = null) where S : IPopupState<T>, new();
         void EndPopupState(IPopupState<T> state, object parameter = null);
         IReadOnlyCollection<IPopupState<T>> ViewPopupStates();

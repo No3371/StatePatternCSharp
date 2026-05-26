@@ -97,20 +97,62 @@ namespace BAStudio.StatePattern
             PopupStateStarted?.Invoke(s);
             return s;
         }
+
+        Dictionary<IPopupState<T>, TaskCompletionSource<object>> popupTasks;
+        public Task PopupAsync(IPopupState<T> s, object parameter = null)
+            => PopupAsync<object>(s, parameter);
+        public async Task<TResult> PopupAsync<TResult>(IPopupState<T> s, object parameter = null)
+        {
+            popupTasks ??= new Dictionary<IPopupState<T>, TaskCompletionSource<object>>();
+            if (popupTasks.ContainsKey(s))
+                throw new InvalidOperationException("Popup already has a pending async wait.");
+            var tcs = new TaskCompletionSource<object>(
+                TaskCreationOptions.RunContinuationsAsynchronously);
+            popupTasks[s] = tcs;
+            try
+            {
+                Popup(s, parameter);
+            }
+            catch
+            {
+                popupTasks.Remove(s);
+                throw;
+            }
+            var result = await tcs.Task;
+            return (TResult)result;
+        }
+
+        public async Task<S> PopupAsync<S>(object parameter = null)
+            where S : IPopupState<T>, new()
+        {
+            var s = new S();
+            await PopupAsync(s, parameter);
+            return s;
+        }
+    
         public void EndPopupState(IPopupState<T> s, object parameter = null)
         {
+            if (PopupStates == null || !PopupStates.Contains(s))
+                return;
+
             if (PopupStatesToEnd == null)
                 PopupStatesToEnd = new List<IPopupState<T>>();
 
             s.OnEnding(this, parameter);
             PopupStateEnded?.Invoke(s);
             SendEvent(new PopupStateEndedEvent(s));
+            CompletePopupTask(s, parameter);
             if (IsUpdating)
             {
                 PopupStatesToEnd.Add(s);
                 return;
             }
             PopupStates.Remove(s);
+        }
+        void CompletePopupTask(IPopupState<T> s, object result)
+        {
+            if (popupTasks != null && popupTasks.Remove(s, out var tcs))
+                tcs.TrySetResult(result);
         }
         public IReadOnlyCollection<IPopupState<T>>? ViewPopupStates()
         {
