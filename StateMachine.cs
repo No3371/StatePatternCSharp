@@ -418,6 +418,12 @@ namespace BAStudio.StatePattern
 
         public virtual bool SendEvent<S, E>(E ev, bool shouldThrow) where S : IState<T>
         {
+            if (debugOutput != null && (DebugFlags & DebugFlag_Event) != 0 && CurrentState != null)
+                LogFormat("A StateMachine<{0}> is sending event {1} to {2}",
+                          Subject!.GetType().Name,
+                          ev.GetType().Name,
+                          CurrentState?.GetType()?.Name);
+
             if (CurrentState is not S)
                 if (shouldThrow) throw new Exception($"Event sender expected {typeof(S)}, but current state is {CurrentState.GetType().Name}.");
                 else return false;
